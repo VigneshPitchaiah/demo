@@ -27,6 +27,29 @@
             {% endfor %}
         </tbody>
     </table>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpi9uAGTG4t5aPvkFBq8-5NmC_xDrnbfA",
+            authDomain: "datacraft-d3fa5.firebaseapp.com",
+            projectId: "datacraft-d3fa5",
+            storageBucket: "datacraft-d3fa5.appspot.com",
+            messagingSenderId: "298613715569",
+            appId: "1:298613715569:web:f8099d8bfabe014ccae1d0",
+            measurementId: "G-MN55L6S6Z0"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
 </body>
 
 </html>
