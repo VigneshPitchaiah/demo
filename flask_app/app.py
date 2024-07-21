@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 import psycopg2
 
-# Database configuration
+# Database configuration New Change
 db_user = 'postgres'
 db_password = 'Vignesh07##'
 db_host = 'localhost'
