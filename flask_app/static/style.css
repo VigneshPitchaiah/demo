@@ -1,0 +1,168 @@
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Sidebar */
+#wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+#sidebar {
+    min-height: 100vh;
+    /* Ensure sidebar takes full viewport height */
+    width: 250px;
+    /* Fixed width for the sidebar */
+    background-color: #343a40;
+    padding: 20px;
+}
+
+#sidebar h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
+    font-weight: bold;
+    color: #f8f9fa;
+}
+
+#sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+#sidebar li {
+    margin: 20px 0;
+}
+
+#sidebar a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    display: block;
+    transition: background-color 0.3s ease;
+}
+
+#sidebar a:hover {
+    background-color: #555;
+}
+
+/* Page Content */
+#page-content-wrapper {
+    flex: 1;
+    /* Take up the remaining space */
+    padding: 20px;
+    background-color: #fff;
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 30px;
+    font-weight: bold;
+    color: #343a40;
+}
+
+/* Form and Table */
+.form-select,
+.form-control,
+.btn {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.btn {
+    background-color: #007bff;
+    color: white;
+    font-size: 18px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+/* Table */
+.table {
+    width: 100%;
+    margin-top: 30px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    text-align: center;
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+td {
+    font-size: 16px;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Table Row Highlight */
+table tr.highlight {
+    background-color: #f2f2f2;
+}
+
+/* Search Bar */
+#search-bar {
+    width: 100%;
+    margin-bottom: 30px;
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #wrapper {
+        flex-direction: column;
+    }
+
+    #sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+
+    #page-content-wrapper {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    #sidebar h2 {
+        font-size: 20px;
+    }
+
+    #sidebar a {
+        font-size: 16px;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+}

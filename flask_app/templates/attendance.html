@@ -110,6 +110,7 @@
     }
 </style>
 
+
 <body>
     <div class="d-flex" id="wrapper">
         <!-- Sidebar -->
@@ -123,24 +124,41 @@
 
         <!-- Page Content -->
         <div id="page-content-wrapper" class="container-fluid">
-            <h1 class="my-4">Track Attendance</h1>
+            <h1 class="my-4">Attendance Records</h1>
 
-            <!-- Network Selection Form -->
-            <form method="POST" action="/submit">
-                <div class="mb-4">
-                    <label for="network" class="form-label">Select Network:</label>
-                    <select id="network" name="network" class="form-select">
-                        <option value="" disabled selected>-- Select Network --</option>
-                        {% for network in networks %}
-                        <option value="{{ network }}">{{ network }}</option>
+            <!-- Search Bar -->
+            <div class="mb-4">
+                <input type="text" id="search-bar" class="form-control"
+                    placeholder="Search by name, status, or comment">
+            </div>
+
+            <!-- Attendance Table -->
+            <!-- Attendance Table Wrapper -->
+            <div class="table-wrapper" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-bordered" id="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Student Name</th>
+                            <th>Status</th>
+                            <th>Comment</th>
+                            <th>Networker</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance in attendances %}
+                        <tr>
+                            <td>{{ attendance.id }}</td>
+                            <td>{{ attendance.student_name }}</td>
+                            <td>{{ attendance.status }}</td>
+                            <td>{{ attendance.comment or "No comment" }}</td>
+                            <td>{{ attendance.networker_name }}</td>
+                        </tr>
                         {% endfor %}
-                    </select>
-                </div>
+                    </tbody>
+                </table>
+            </div>
 
-                <div id="student-list"></div>
-
-                <button type="submit" class="btn btn-primary">Submit Attendance</button>
-            </form>
         </div>
     </div>
 
