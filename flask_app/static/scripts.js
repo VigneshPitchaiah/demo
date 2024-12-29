@@ -4,7 +4,7 @@ $(document).ready(function () {
         const network = $(this).val();
         if (network) {
             $.get(`/students/${network}`, function (data) {
-                let studentHTML = '<table><tr><th>ID</th><th>Student</th><th>Present</th><th>Absent</th><th>Late</th><th>Comment</th></tr>';
+                let studentHTML = '<table><tr><th>ID</th><th>Student</th><th>Will Join on 03</th><th>Cannot Join on 03</th><th>No Response</th><th>Comment</th></tr>';
                 data.forEach(student => {
                     studentHTML += `
                         <tr>
