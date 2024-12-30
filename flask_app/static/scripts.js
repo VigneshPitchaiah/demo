@@ -10,9 +10,9 @@ $(document).ready(function () {
                         <tr>
                             <td>${student.id}</td> <!-- Display the ID -->
                             <td>${student.name}</td>
-                            <td><input type="radio" name="status_${student.id}" value="Present"></td>
-                            <td><input type="radio" name="status_${student.id}" value="Absent"></td>
-                            <td><input type="radio" name="status_${student.id}" value="Late"></td>
+                            <td><input type="radio" name="status_${student.id}" value="Will Join on 03"></td>
+                            <td><input type="radio" name="status_${student.id}" value="Cannot Join on 03"></td>
+                            <td><input type="radio" name="status_${student.id}" value="No Response"></td>
                             <td><input type="text" name="comment_${student.id}" class="form-control" placeholder="Add a comment"></td>
                         </tr>`;
                 });
