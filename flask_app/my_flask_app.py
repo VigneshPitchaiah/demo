@@ -16,7 +16,7 @@ def get_all_attendance():
 @app.route('/attendance')
 def view_attendance():
     # Fetch all attendance records to display
-    attendance_data = supabase.table('attendance').select('id,	student_name,	networker_name, status').execute().data
+    attendance_data = supabase.table('attendance').select('id,	student_name,	networker_name, status, comment').execute().data
     return render_template('attendance.html', attendances=attendance_data)
 
 
