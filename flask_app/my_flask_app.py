@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from supabase import create_client, Client
 import gspread
@@ -17,19 +18,12 @@ supabase: Client = create_client(url, key)
 
 # Google Sheets Authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds_dict = {
-    "type": "service_account",
-    "project_id": os.getenv("GS_PROJECT_ID"),
-    "private_key_id": os.getenv("GS_PRIVATE_KEY_ID"),
-    "private_key": os.getenv("GS_PRIVATE_KEY").replace("\\n", "\n"),
-    "client_email": os.getenv("GS_CLIENT_EMAIL"),
-    "client_id": os.getenv("GS_CLIENT_ID"),
-    "auth_uri": os.getenv("GS_AUTH_URI"),
-    "token_uri": os.getenv("GS_TOKEN_URI"),
-    "auth_provider_x509_cert_url": os.getenv("GS_AUTH_PROVIDER_CERT_URL"),
-    "client_x509_cert_url": os.getenv("GS_CLIENT_CERT_URL"),
-}
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
+# Parse the JSON string from the GOOGLE_SERVICE_ACCOUNT environment variable
+service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
+
+# Use the parsed JSON dictionary for Google Sheets credentials
+creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 client = gspread.authorize(creds)  # Initialize the client here
 
 # Open the Google Sheet using its ID (set in environment variables)
