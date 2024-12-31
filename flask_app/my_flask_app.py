@@ -51,13 +51,13 @@ else:
 
 @app.route('/attendance')
 def view_attendance():
-    attendance_data = supabase.table('attendance_copy').select('id, student_name, networker_name, status, comment, timestamp').execute().data
+    attendance_data = supabase.table('attendance_cop').select('id, student_name, networker_name, status, comment, timestamp').execute().data
     return render_template('attendance.html', attendances=attendance_data)
 
 
 @app.route('/')
 def index():
-    response = supabase.table('attendance_copy').select('networker_name').execute()
+    response = supabase.table('attendance').select('networker_name').execute()
     networks = sorted(set(row['networker_name'] for row in response.data))
     return render_template('index.html', networks=networks)
 
@@ -65,7 +65,7 @@ def index():
 @app.route('/students/<network>')
 def get_students(network):
     # Fetch students by network
-    response = supabase.table('attendance_copy').select('*').eq('networker_name', network).execute()
+    response = supabase.table('attendance').select('*').eq('networker_name', network).execute()
     students = [{'id': row['id'], 'name': row['student_name']} for row in response.data]
     return jsonify(students)
 
@@ -87,7 +87,7 @@ def submit_attendance():
             worksheet.delete_rows(2, len(all_rows))  # Deletes rows starting from row 2 onwards
 
         # Get all column names dynamically from the database
-        columns_response = supabase.table('attendance_copy').select('*').limit(1).execute().data
+        columns_response = supabase.table('attendance').select('*').limit(1).execute().data
         if not columns_response:
             raise Exception("Failed to fetch columns")
         custom_headers = {
