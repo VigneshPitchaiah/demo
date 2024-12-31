@@ -20,15 +20,23 @@ supabase: Client = create_client(url, key)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 # Parse the JSON string from the GOOGLE_SERVICE_ACCOUNT environment variable
-service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
+try:
+    service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
+    service_account_info['private_key'] = service_account_info['private_key'].replace("\\n", "\n")
+    print("Private key loaded successfully")
+except (json.JSONDecodeError, KeyError) as e:
+    raise ValueError(f"Error parsing GOOGLE_SERVICE_ACCOUNT: {e}")
 
 service_account_info['private_key'] = service_account_info['private_key'].replace("\\n", "\n")
 print('**'*50)
 print(service_account_info['private_key'])
 
 # Use the parsed JSON dictionary for Google Sheets credentials
-creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
-client = gspread.authorize(creds)  # Initialize the client here
+try:
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+    client = gspread.authorize(creds)
+except Exception as e:
+    raise ValueError(f"Error authorizing Google Sheets client: {e}")
 
 # Open the Google Sheet using its ID (set in environment variables)
 sheet = client.open_by_key(os.getenv("GS_SHEET_ID")).sheet1
