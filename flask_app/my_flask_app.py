@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from supabase import create_client, Client
 import gspread
@@ -5,15 +6,34 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
-# Supabase Connection
-url = "https://fcxdbxvuxvuoownippzm.supabase.co"  # Replace with your Supabase URL
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjeGRieHZ1eHZ1b293bmlwcHptIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTAxMTQzNSwiZXhwIjoyMDUwNTg3NDM1fQ.HH3H1ZrB8tnyDSwsCO3Yj-YChJ9nYRKvnLxQ-Iw_xTA"
-supabase: Client = create_client(url, key)
+# Fetch environment variables for Supabase and Google Sheets credentials
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+GOOGLE_PROJECT_ID = os.environ.get("GOOGLE_PROJECT_ID")
+GOOGLE_PRIVATE_KEY_ID = os.environ.get("GOOGLE_PRIVATE_KEY_ID")
+GOOGLE_PRIVATE_KEY = os.environ.get("GOOGLE_PRIVATE_KEY").replace("\\n", "\n")  # Handle newlines properly
+GOOGLE_CLIENT_EMAIL = os.environ.get("GOOGLE_CLIENT_EMAIL")
+
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Google Sheets Authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-client = gspread.authorize(creds)  # Initialize the client here
+creds = ServiceAccountCredentials.from_json_keyfile_dict({
+    "type": "service_account",
+    "project_id": GOOGLE_PROJECT_ID,
+    "private_key_id": GOOGLE_PRIVATE_KEY_ID,
+    "private_key": GOOGLE_PRIVATE_KEY,
+    "client_email": GOOGLE_CLIENT_EMAIL,
+    "client_id": "107145635268257892727",  # Optional: move this to environment variable if needed
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sheets-api-service-account%40analytics-443211.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+}, scope)
+client = gspread.authorize(creds)  # Initialize the Google Sheets client
 
 # Open the Google Sheet using its ID (You already provided the ID)
 sheet = client.open_by_key('1JfH9Nft6QM56ErL42h8gJmyjEbuVgXJxTw2-4tFLJq4').sheet1
