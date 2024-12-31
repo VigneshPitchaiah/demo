@@ -23,7 +23,7 @@ print(google_credentials["private_key"])
 # Google Sheets Authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = None  # Initialize creds to ensure it's in scope
-
+client = None
 try:
     creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scopes=scope)
     print("Credentials loaded successfully.")
@@ -40,7 +40,14 @@ else:
     print("Cannot proceed without valid credentials.")
 
 # Open the Google Sheet using its ID (You already provided the ID)
-sheet = client.open_by_key(google_sheet_id).sheet1
+if client:
+    try:
+        sheet = client.open_by_key(google_sheet_id).sheet1
+        print("Sheet opened successfully.")
+    except Exception as e:
+        print("Failed to open the sheet:", e)
+else:
+    print("Client not authorized. Cannot open the sheet.")
 
 @app.route('/attendance')
 def view_attendance():
