@@ -1,5 +1,3 @@
-import os
-import json
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from supabase import create_client, Client
 import gspread
@@ -7,58 +5,29 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
-# Load environment variables
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-google_credentials = json.loads(os.getenv("GOOGLE_SHEETS_CREDENTIALS"))
-google_sheet_id = os.getenv("GOOGLE_SHEET_ID")
-
 # Supabase Connection
-supabase: Client = create_client(supabase_url, supabase_key)
-
-
-print(f'*************************google_credentials***************\n {google_credentials}')
-print(google_credentials["private_key"])
+url = "https://fcxdbxvuxvuoownippzm.supabase.co"  # Replace with your Supabase URL
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjeGRieHZ1eHZ1b293bmlwcHptIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTAxMTQzNSwiZXhwIjoyMDUwNTg3NDM1fQ.HH3H1ZrB8tnyDSwsCO3Yj-YChJ9nYRKvnLxQ-Iw_xTA"
+supabase: Client = create_client(url, key)
 
 # Google Sheets Authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = None  # Initialize creds to ensure it's in scope
-client = None
-try:
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scope)
-    print("Credentials loaded successfully.")
-except Exception as e:
-    print(f"Failed to load credentials: {e}")
-    creds = None
-
-if creds:
-    try:
-        client = gspread.authorize(creds)
-        print("Client authorized successfully.")
-    except Exception as e:
-        print(f"Failed to authorize client: {e}")
-        client = None
-else:
-    client = None
+creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+client = gspread.authorize(creds)  # Initialize the client here
 
 # Open the Google Sheet using its ID (You already provided the ID)
-if client:
-    try:
-        sheet = client.open_by_key(google_sheet_id).sheet1
-        print("Sheet accessed successfully.")
-    except Exception as e:
-        print(f"Failed to access the sheet: {e}")
-else:
-    print("Client is not authorized. Exiting...")
+sheet = client.open_by_key('1JfH9Nft6QM56ErL42h8gJmyjEbuVgXJxTw2-4tFLJq4').sheet1
 
 @app.route('/attendance')
 def view_attendance():
-    attendance_data = supabase.table('attendance_cop').select('id, student_name, networker_name, status, comment, timestamp').execute().data
+    # Fetch all attendance records to display
+    attendance_data = supabase.table('attendance').select('id, student_name, networker_name, status, comment, timestamp').execute().data
     return render_template('attendance.html', attendances=attendance_data)
 
 
 @app.route('/')
 def index():
+    # Fetch unique networks
     response = supabase.table('attendance').select('networker_name').execute()
     networks = sorted(set(row['networker_name'] for row in response.data))
     return render_template('index.html', networks=networks)
@@ -130,7 +99,7 @@ def submit_attendance():
                 comment = data.get(comment_key, "")  # Default to empty if no comment is provided
 
                 # Update the database with both status and comment, exclude 'timestamp' from the update
-                update_response = supabase.table('attendance_copy').update({
+                update_response = supabase.table('attendance').update({
                     'status': status,
                     'comment': comment
                 }).eq('id', student_id).execute()
@@ -138,7 +107,7 @@ def submit_attendance():
                 print(f"Update Response for Student {student_id}: {update_response}")
 
         # Fetch all rows from the database after all updates
-        fetch_response = supabase.table('attendance_copy').select('id, student_name, networker_name, status, comment').execute()
+        fetch_response = supabase.table('attendance').select('id, student_name, networker_name, status, comment').execute()
         if not fetch_response.data:
             print(f"No data found in the attendance table.")
             return "No data found", 500
