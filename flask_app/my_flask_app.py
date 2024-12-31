@@ -23,6 +23,8 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
 
 service_account_info['private_key'] = service_account_info['private_key'].replace("\\n", "\n")
+print('**'*50)
+print(service_account_info['private_key'])
 
 # Use the parsed JSON dictionary for Google Sheets credentials
 creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
