@@ -22,15 +22,22 @@ print(google_credentials["private_key"])
 
 # Google Sheets Authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = None  # Initialize creds to ensure it's in scope
+
 try:
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scopes=[
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scopes=scope)
     print("Credentials loaded successfully.")
 except Exception as e:
     print("Failed to load credentials:", e)
-client = gspread.authorize(creds)
+
+if creds:
+    try:
+        client = gspread.authorize(creds)
+        print("Client authorized successfully.")
+    except Exception as e:
+        print("Failed to authorize client:", e)
+else:
+    print("Cannot proceed without valid credentials.")
 
 # Open the Google Sheet using its ID (You already provided the ID)
 sheet = client.open_by_key(google_sheet_id).sheet1
