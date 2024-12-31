@@ -17,11 +17,20 @@ google_sheet_id = os.getenv("GOOGLE_SHEET_ID")
 supabase: Client = create_client(supabase_url, supabase_key)
 
 
+print(f'*************************google_credentials***************\n {google_credentials}')
+print(google_credentials["private_key"])
+
 # Google Sheets Authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scope)
+try:
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scopes=[
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ])
+    print("Credentials loaded successfully.")
+except Exception as e:
+    print("Failed to load credentials:", e)
 client = gspread.authorize(creds)
-
 
 # Open the Google Sheet using its ID (You already provided the ID)
 sheet = client.open_by_key(google_sheet_id).sheet1
