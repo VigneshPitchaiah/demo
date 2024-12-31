@@ -22,19 +22,29 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 # Parse the JSON string from the GOOGLE_SERVICE_ACCOUNT environment variable
 try:
     service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
-    service_account_info['private_key'] = service_account_info['private_key'].replace("\\n", "\n")
+    private_key = service_account_info['private_key'].replace("\\n", "\n")
+    service_account_info['private_key'] = private_key
     print("Private key loaded successfully")
 except (json.JSONDecodeError, KeyError) as e:
     raise ValueError(f"Error parsing GOOGLE_SERVICE_ACCOUNT: {e}")
 
-service_account_info['private_key'] = service_account_info['private_key'].replace("\\n", "\n")
+# Ensure the private key has correct padding
+def fix_base64_padding(key):
+    padding_needed = len(key) % 4
+    if padding_needed:
+        key += '=' * (4 - padding_needed)
+    return key
+    
+service_account_info['private_key'] = fix_base64_padding(service_account_info['private_key'])
+
 print('**'*50)
-print(service_account_info['private_key'])
+print("Fixed private key:\n", service_account_info['private_key'])
 
 # Use the parsed JSON dictionary for Google Sheets credentials
 try:
     creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
-    client = gspread.authorize(creds)
+    client = gspread.authorize(creds)  # Initialize the client here
+    print("Google Sheets client authorized successfully")
 except Exception as e:
     raise ValueError(f"Error authorizing Google Sheets client: {e}")
 
