@@ -25,29 +25,31 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = None  # Initialize creds to ensure it's in scope
 client = None
 try:
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scopes=scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scope)
     print("Credentials loaded successfully.")
 except Exception as e:
-    print("Failed to load credentials:", e)
+    print(f"Failed to load credentials: {e}")
+    creds = None
 
 if creds:
     try:
         client = gspread.authorize(creds)
         print("Client authorized successfully.")
     except Exception as e:
-        print("Failed to authorize client:", e)
+        print(f"Failed to authorize client: {e}")
+        client = None
 else:
-    print("Cannot proceed without valid credentials.")
+    client = None
 
 # Open the Google Sheet using its ID (You already provided the ID)
 if client:
     try:
         sheet = client.open_by_key(google_sheet_id).sheet1
-        print("Sheet opened successfully.")
+        print("Sheet accessed successfully.")
     except Exception as e:
-        print("Failed to open the sheet:", e)
+        print(f"Failed to access the sheet: {e}")
 else:
-    print("Client not authorized. Cannot open the sheet.")
+    print("Client is not authorized. Exiting...")
 
 @app.route('/attendance')
 def view_attendance():
