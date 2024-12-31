@@ -6,56 +6,48 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
-# Fetch environment variables for Supabase and Google Sheets credentials
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# Load environment variables (ensure you have a .env file with the required keys)
+from dotenv import load_dotenv
+load_dotenv()
 
-GOOGLE_PROJECT_ID = os.environ.get("GOOGLE_PROJECT_ID")
-GOOGLE_PRIVATE_KEY_ID = os.environ.get("GOOGLE_PRIVATE_KEY_ID")
-GOOGLE_PRIVATE_KEY = os.environ.get("GOOGLE_PRIVATE_KEY").replace("\\n", "\n")  # Handle newlines properly
-GOOGLE_CLIENT_EMAIL = os.environ.get("GOOGLE_CLIENT_EMAIL")
-
-# Initialize Supabase client
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Supabase Connection
+url = os.getenv("SUPABASE_URL")  # Supabase URL
+key = os.getenv("SUPABASE_KEY")  # Supabase API Key
+supabase: Client = create_client(url, key)
 
 # Google Sheets Authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict({
+creds_dict = {
     "type": "service_account",
-    "project_id": GOOGLE_PROJECT_ID,
-    "private_key_id": GOOGLE_PRIVATE_KEY_ID,
-    "private_key": GOOGLE_PRIVATE_KEY,
-    "client_email": GOOGLE_CLIENT_EMAIL,
-    "client_id": "107145635268257892727",  # Optional: move this to environment variable if needed
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sheets-api-service-account%40analytics-443211.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
-}, scope)
-client = gspread.authorize(creds)  # Initialize the Google Sheets client
+    "project_id": os.getenv("GS_PROJECT_ID"),
+    "private_key_id": os.getenv("GS_PRIVATE_KEY_ID"),
+    "private_key": os.getenv("GS_PRIVATE_KEY").replace("\\n", "\n"),
+    "client_email": os.getenv("GS_CLIENT_EMAIL"),
+    "client_id": os.getenv("GS_CLIENT_ID"),
+    "auth_uri": os.getenv("GS_AUTH_URI"),
+    "token_uri": os.getenv("GS_TOKEN_URI"),
+    "auth_provider_x509_cert_url": os.getenv("GS_AUTH_PROVIDER_CERT_URL"),
+    "client_x509_cert_url": os.getenv("GS_CLIENT_CERT_URL"),
+}
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+client = gspread.authorize(creds)  # Initialize the client here
 
-# Open the Google Sheet using its ID (You already provided the ID)
-sheet = client.open_by_key('1JfH9Nft6QM56ErL42h8gJmyjEbuVgXJxTw2-4tFLJq4').sheet1
+# Open the Google Sheet using its ID (set in environment variables)
+sheet = client.open_by_key(os.getenv("GS_SHEET_ID")).sheet1
 
 @app.route('/attendance')
 def view_attendance():
-    # Fetch all attendance records to display
     attendance_data = supabase.table('attendance').select('id, student_name, networker_name, status, comment, timestamp').execute().data
     return render_template('attendance.html', attendances=attendance_data)
 
-
 @app.route('/')
 def index():
-    # Fetch unique networks
     response = supabase.table('attendance').select('networker_name').execute()
     networks = sorted(set(row['networker_name'] for row in response.data))
     return render_template('index.html', networks=networks)
 
-
 @app.route('/students/<network>')
 def get_students(network):
-    # Fetch students by network
     response = supabase.table('attendance').select('*').eq('networker_name', network).execute()
     students = [{'id': row['id'], 'name': row['student_name']} for row in response.data]
     return jsonify(students)
@@ -64,92 +56,62 @@ def get_students(network):
 def submit_attendance():
     data = request.form
     try:
-        # Open or create the "results" worksheet
         try:
-            worksheet = client.open_by_key('1JfH9Nft6QM56ErL42h8gJmyjEbuVgXJxTw2-4tFLJq4').worksheet("results")
-            print("Worksheet 'results' found.")
+            worksheet = client.open_by_key(os.getenv("GS_SHEET_ID")).worksheet("results")
         except gspread.exceptions.WorksheetNotFound:
-            print("Worksheet 'results' not found. Creating a new one...")
-            worksheet = client.open_by_key('1JfH9Nft6QM56ErL42h8gJmyjEbuVgXJxTw2-4tFLJq4').add_worksheet(title="results", rows=100, cols=6)
+            worksheet = client.open_by_key(os.getenv("GS_SHEET_ID")).add_worksheet(title="results", rows=100, cols=6)
 
-        # Get the total number of rows and clear rows below the header (row 1)
         all_rows = worksheet.get_all_values()
-        if len(all_rows) > 1:  # If there are data rows below the header
-            worksheet.delete_rows(2, len(all_rows))  # Deletes rows starting from row 2 onwards
+        if len(all_rows) > 1:
+            worksheet.delete_rows(2, len(all_rows))
 
-        # Get all column names dynamically from the database
         columns_response = supabase.table('attendance').select('*').limit(1).execute().data
         if not columns_response:
             raise Exception("Failed to fetch columns")
+
         custom_headers = {
             'id': 'Roll Number',
             'student_name': 'Student Name',
             'networker_name': 'Networker',
             'status': 'Status',
             'comment': 'Comment',
-            # Add any other columns you have, mapping to custom names
         }
 
-        # Extract column names from the first row
-        # Exclude 'timestamp' from the columns if it's not needed
         columns = list(columns_response[0].keys())
         columns = [column for column in columns if column != 'timestamp']
-
-        # Create custom columns based on your custom_headers mapping
         custom_columns = [custom_headers.get(col, col) for col in columns]
-
-        # Check if the first row already contains headers
         existing_headers = worksheet.row_values(1)
 
-        # Only append header row if it's not already present
         if not existing_headers:
-            worksheet.append_row(custom_columns)  # Add header row
-            print(f"Worksheet headers added.")
-        else:
-            print(f"Headers already exist.")
+            worksheet.append_row(custom_columns)
 
-        # Process attendance submissions and update DB first
         for key, value in data.items():
             if key.startswith('status_'):
                 student_id = key.split('_')[1]
-                status = value  # The selected status: 'Present', 'Absent', or 'Late'
-
-                # Get the associated comment (if any)
+                status = value
                 comment_key = f"comment_{student_id}"
-                comment = data.get(comment_key, "")  # Default to empty if no comment is provided
-
-                # Update the database with both status and comment, exclude 'timestamp' from the update
-                update_response = supabase.table('attendance').update({
+                comment = data.get(comment_key, "")
+                supabase.table('attendance').update({
                     'status': status,
                     'comment': comment
                 }).eq('id', student_id).execute()
 
-                print(f"Update Response for Student {student_id}: {update_response}")
-
-        # Fetch all rows from the database after all updates
         fetch_response = supabase.table('attendance').select('id, student_name, networker_name, status, comment').execute()
         if not fetch_response.data:
-            print(f"No data found in the attendance table.")
             return "No data found", 500
 
-        # Prepare the rows for Google Sheets by extracting all column values
-        all_rows = []
-        for row in fetch_response.data:
-            # Format the timestamp field if necessary
-            formatted_row = [row[column] if column != 'timestamp' else row[column].split('T')[0] for column in columns]  # Format as 'YYYY-MM-DD'
-            all_rows.append(formatted_row)
+        all_rows = [
+            [row[column] if column != 'timestamp' else row[column].split('T')[0] for column in columns]
+            for row in fetch_response.data
+        ]
 
-        # Write all rows to Google Sheets starting from row 2 (leaving row 1 as header)
         if all_rows:
             worksheet.append_rows(all_rows, value_input_option='RAW', insert_data_option='INSERT_ROWS')
-            print(f"Written {len(all_rows)} rows to Google Sheets.")
 
         return redirect(url_for('index'))
 
     except Exception as e:
-        print(f"An error occurred during submission: {e}")
         return f"An error occurred: {e}", 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
