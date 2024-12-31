@@ -1,14 +1,14 @@
+from flask import Flask, request, render_template, redirect, url_for, jsonify
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from dotenv import load_dotenv
 from supabase import create_client, Client
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 
 app = Flask(__name__)
 
 # Load environment variables (ensure you have a .env file with the required keys)
-from dotenv import load_dotenv
 load_dotenv()
 
 # Supabase Connection
@@ -17,40 +17,44 @@ key = os.getenv("SUPABASE_KEY")  # Supabase API Key
 supabase: Client = create_client(url, key)
 
 # Google Sheets Authentication
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-# Parse the JSON string from the GOOGLE_SERVICE_ACCOUNT environment variable
-try:
-    service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
-    private_key = service_account_info['private_key'].replace("\\n", "\n")
-    service_account_info['private_key'] = private_key
-    print("Private key loaded successfully")
-except (json.JSONDecodeError, KeyError) as e:
-    raise ValueError(f"Error parsing GOOGLE_SERVICE_ACCOUNT: {e}")
-
-# Ensure the private key has correct padding
+# Helper function to fix Base64 padding
 def fix_base64_padding(key):
+    key = key.strip()  # Remove any leading or trailing whitespace
     padding_needed = len(key) % 4
     if padding_needed:
         key += '=' * (4 - padding_needed)
     return key
 
-service_account_info['private_key'] = fix_base64_padding(service_account_info['private_key'])
-
-# Debug: Printing the fixed private key (Only for local testing, avoid in production)
-print('**' * 50)
-print("Fixed private key:\n", service_account_info['private_key'])
-
-# Use the parsed JSON dictionary for Google Sheets credentials
+# Parse the JSON string from the GOOGLE_SERVICE_ACCOUNT environment variable
 try:
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
-    client = gspread.authorize(creds)  # Initialize the client here
+    service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
+    if 'private_key' in service_account_info:
+        private_key = service_account_info['private_key']
+        private_key = private_key.replace("\\n", "\n").strip()
+        private_key = fix_base64_padding(private_key)
+        service_account_info['private_key'] = private_key
+        print("Private key loaded and fixed successfully")
+    else:
+        raise KeyError("Private key not found in service account info.")
+except (json.JSONDecodeError, KeyError) as e:
+    raise ValueError(f"Error parsing GOOGLE_SERVICE_ACCOUNT: {e}")
+
+# Authenticate with Google Sheets
+try:
+    credentials = Credentials.from_service_account_info(
+        service_account_info,
+        scopes=SCOPES
+    )
+    service = build('sheets', 'v4', credentials=credentials)
     print("Google Sheets client authorized successfully")
 except Exception as e:
     raise ValueError(f"Error authorizing Google Sheets client: {e}")
 
 # Open the Google Sheet using its ID (set in environment variables)
-sheet = client.open_by_key(os.getenv("GS_SHEET_ID")).sheet1
+SHEET_ID = os.getenv("GS_SHEET_ID")
+sheet = service.spreadsheets()
 
 @app.route('/attendance')
 def view_attendance():
@@ -73,15 +77,32 @@ def get_students(network):
 def submit_attendance():
     data = request.form
     try:
+        # Open the "results" worksheet or create it if not exists
         try:
-            worksheet = client.open_by_key(os.getenv("GS_SHEET_ID")).worksheet("results")
-        except gspread.exceptions.WorksheetNotFound:
-            worksheet = client.open_by_key(os.getenv("GS_SHEET_ID")).add_worksheet(title="results", rows=100, cols=6)
+            worksheet = sheet.values().get(spreadsheetId=SHEET_ID, range="results!A1").execute()
+        except Exception:
+            request_body = {
+                'requests': [{
+                    'addSheet': {
+                        'properties': {
+                            'title': 'results',
+                            'gridProperties': {
+                                'rowCount': 100,
+                                'columnCount': 6
+                            }
+                        }
+                    }
+                }]
+            }
+            sheet.batchUpdate(spreadsheetId=SHEET_ID, body=request_body).execute()
 
-        all_rows = worksheet.get_all_values()
-        if len(all_rows) > 1:
-            worksheet.delete_rows(2, len(all_rows))
+        # Clear existing data from rows (if any)
+        all_rows = sheet.values().get(spreadsheetId=SHEET_ID, range="results").execute()
+        if 'values' in all_rows and len(all_rows['values']) > 1:
+            range_to_clear = f"results!A2:Z{len(all_rows['values'])}"
+            sheet.values().clear(spreadsheetId=SHEET_ID, range=range_to_clear).execute()
 
+        # Fetch columns and map them to custom headers
         columns_response = supabase.table('attendance').select('*').limit(1).execute().data
         if not columns_response:
             raise Exception("Failed to fetch columns")
@@ -97,11 +118,16 @@ def submit_attendance():
         columns = list(columns_response[0].keys())
         columns = [column for column in columns if column != 'timestamp']
         custom_columns = [custom_headers.get(col, col) for col in columns]
-        existing_headers = worksheet.row_values(1)
 
-        if not existing_headers:
-            worksheet.append_row(custom_columns)
+        # Update headers in the "results" sheet
+        sheet.values().update(
+            spreadsheetId=SHEET_ID,
+            range="results!A1",
+            valueInputOption="RAW",
+            body={"values": [custom_columns]}
+        ).execute()
 
+        # Update Supabase and fetch data for writing into the sheet
         for key, value in data.items():
             if key.startswith('status_'):
                 student_id = key.split('_')[1]
@@ -123,7 +149,13 @@ def submit_attendance():
         ]
 
         if all_rows:
-            worksheet.append_rows(all_rows, value_input_option='RAW', insert_data_option='INSERT_ROWS')
+            sheet.values().append(
+                spreadsheetId=SHEET_ID,
+                range="results!A2",
+                valueInputOption="RAW",
+                insertDataOption="INSERT_ROWS",
+                body={"values": all_rows}
+            ).execute()
 
         return redirect(url_for('index'))
 
