@@ -4,132 +4,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Attendance Tracker</title>
+
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<style>
-    /* Global reset for consistent box sizing */
-    * {
-        box-sizing: border-box;
-    }
-
-    /* Ensure the sidebar is fixed */
-    #sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: 250px;
-        background-color: #343a40;
-        color: #ffffff;
-        overflow-y: auto;
-        padding: 20px;
-    }
-
-    /* Page content alignment */
-    #page-content-wrapper {
-        margin-left: 250px;
-        padding: 20px;
-        overflow-x: hidden;
-    }
-
-    body {
-        margin: 0;
-        overflow-x: hidden;
-        font-family: Arial, sans-serif;
-    }
-
-    /* Table styles */
-    .table-wrapper {
-        max-height: 500px;
-        overflow-y: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: #ffffff;
-    }
-
-    thead {
-        background-color: #343a40;
-        color: #ffffff;
-    }
-
-    th,
-    td {
-        padding: 12px;
-        border: 1px solid #dee2e6;
-        text-align: center;
-        /* Center-align headers and content */
-        vertical-align: middle;
-        /* Ensure proper vertical alignment */
-    }
-
-    th {
-        text-transform: uppercase;
-        font-weight: bold;
-    }
-
-    tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
-
-    tr:hover {
-        background-color: #e9ecef;
-    }
-
-    /* Search bar alignment */
-    #search-bar {
-        max-width: 300px;
-        margin-bottom: 20px;
-    }
-
-    /* Buttons styling */
-    button[type="submit"] {
-        background-color: #007bff;
-        color: #ffffff;
-        font-size: 16px;
-        font-weight: bold;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    button[type="submit"]:hover {
-        background-color: #0056b3;
-    }
-
-    /* Heading styles */
-    h1 {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-    }
-</style>
 
 <body>
-    <div class="d-flex" id="wrapper">
+
+    <!-- Sidebar and Page Content Container -->
+    <div class="d-flex">
+
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-dark text-white p-4">
-            <h2>Attendance Tracker</h2>
+        <nav id="sidebar" class="bg-dark text-white p-3">
+            <h2 class="h4">Attendance Tracker</h2>
             <ul class="list-unstyled">
                 <li><a href="/" class="text-white">Home</a></li>
                 <li><a href="/attendance" class="text-white">Attendance Records</a></li>
             </ul>
-        </div>
+        </nav>
 
         <!-- Page Content -->
-        <div id="page-content-wrapper" class="container-fluid">
-            <h1 class="my-4">Track Attendance</h1>
+        <main id="page-content-wrapper" class="container-fluid p-4">
+            <header class="mb-4">
+                <h1>Track Attendance</h1>
+            </header>
 
             <!-- Network Selection Form -->
             <form method="POST" action="/submit">
                 <div class="mb-4">
                     <label for="network" class="form-label">Select Network:</label>
-                    <select id="network" name="network" class="form-select">
+                    <select id="network" name="network" class="form-select" required>
                         <option value="" disabled selected>-- Select Network --</option>
                         {% for network in networks %}
                         <option value="{{ network }}">{{ network }}</option>
@@ -137,15 +46,26 @@
                     </select>
                 </div>
 
-                <div id="student-list"></div>
+                <!-- Student List Wrapper -->
+                <div id="student-list-wrapper" class="table-responsive">
+                    <!-- Student List (to be dynamically generated) -->
+                    <div id="student-list"></div>
+                </div>
 
+                <!-- Submit Button -->
                 <button type="submit" class="btn btn-primary">Submit Attendance</button>
             </form>
-        </div>
+        </main>
+
     </div>
 
+    <!-- Sidebar Toggle Button (accessible for small screens) -->
+    <button id="sidebar-toggle" class="btn btn-dark d-lg-none position-fixed top-0 end-0 m-3">☰ Menu</button>
+
+    <!-- jQuery and Custom Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
 </body>
 
 </html>

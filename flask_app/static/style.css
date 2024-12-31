@@ -1,32 +1,39 @@
-/* General Styles */
+/* Common CSS for Attendance Tracker */
+
+/* Global reset for consistent box sizing */
+* {
+    box-sizing: border-box;
+}
+
+/* Body styling */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
     margin: 0;
-    padding: 0;
+    overflow-x: hidden;
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
 }
 
-/* Sidebar */
-#wrapper {
-    display: flex;
-    min-height: 100vh;
-}
-
+/* Sidebar styling */
 #sidebar {
-    min-height: 100vh;
-    /* Ensure sidebar takes full viewport height */
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
     width: 250px;
-    /* Fixed width for the sidebar */
     background-color: #343a40;
+    color: #ffffff;
+    overflow-y: auto;
     padding: 20px;
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+    transform: translateX(-250px);
+    /* Sidebar starts off-screen */
 }
 
 #sidebar h2 {
     font-size: 24px;
-    margin-bottom: 30px;
     font-weight: bold;
-    color: #f8f9fa;
+    margin-bottom: 20px;
 }
 
 #sidebar ul {
@@ -34,43 +41,42 @@ body {
     padding: 0;
 }
 
-#sidebar li {
-    margin: 20px 0;
+#sidebar ul li {
+    margin-bottom: 15px;
 }
 
-#sidebar a {
-    color: #fff;
+#sidebar ul li a {
+    color: #ffffff;
     text-decoration: none;
     font-size: 18px;
-    padding: 10px 15px;
-    border-radius: 5px;
     display: block;
-    transition: background-color 0.3s ease;
+    padding: 8px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
 }
 
-#sidebar a:hover {
-    background-color: #555;
+#sidebar ul li a:hover {
+    background-color: #495057;
 }
 
-/* Page Content */
+/* Page content styling */
 #page-content-wrapper {
-    flex: 1;
-    /* Take up the remaining space */
+    margin-left: 250px;
     padding: 20px;
-    background-color: #fff;
+    overflow-x: hidden;
+    transition: margin-left 0.3s ease-in-out;
 }
 
 h1 {
-    font-size: 32px;
-    margin-bottom: 30px;
+    font-size: 2rem;
     font-weight: bold;
+    margin-bottom: 1rem;
     color: #343a40;
 }
 
-/* Form and Table */
+/* Form styling */
 .form-select,
-.form-control,
-.btn {
+.form-control {
     width: 100%;
     margin-bottom: 15px;
     padding: 12px;
@@ -78,91 +84,124 @@ h1 {
     border: 1px solid #ccc;
 }
 
-.btn {
+button[type="submit"] {
     background-color: #007bff;
-    color: white;
-    font-size: 18px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
     border: none;
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s;
 }
 
-.btn:hover {
+button[type="submit"]:hover {
     background-color: #0056b3;
 }
 
-/* Table */
-.table {
+/* Table styling */
+.table-wrapper {
+    max-height: 500px;
+    overflow-y: auto;
+    background-color: #ffffff;
+}
+
+/* Table itself */
+table {
     width: 100%;
-    margin-top: 30px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
     border-collapse: collapse;
+    background-color: #ffffff;
+}
+
+thead {
+    background-color: #343a40;
+    color: #ffffff;
 }
 
 th,
 td {
-    text-align: center;
     padding: 12px;
-    border-bottom: 1px solid #ddd;
+    border: 1px solid #dee2e6;
+    text-align: center;
+    vertical-align: middle;
 }
 
 th {
-    background-color: #007bff;
-    color: white;
+    text-transform: uppercase;
     font-weight: bold;
 }
 
-td {
-    font-size: 16px;
+tr:nth-child(even) {
+    background-color: #f8f9fa;
 }
 
 tr:hover {
-    background-color: #f1f1f1;
+    background-color: #e9ecef;
 }
 
-/* Table Row Highlight */
-table tr.highlight {
-    background-color: #f2f2f2;
-}
-
-/* Search Bar */
+/* Search bar styling */
 #search-bar {
-    width: 100%;
-    margin-bottom: 30px;
-    padding: 12px;
+    max-width: 300px;
+    margin-bottom: 20px;
+    padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
-    font-size: 16px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    #wrapper {
-        flex-direction: column;
+/* Toggle Sidebar Button */
+#sidebar-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #343a40;
+    color: #ffffff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1100;
+    display: none;
+}
+
+/* Media Queries for Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    #sidebar {
+        transform: translateX(-250px);
     }
 
-    #sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
+    #sidebar.active {
+        transform: translateX(0);
+    }
+
+    #sidebar-toggle {
+        display: block;
     }
 
     #page-content-wrapper {
         margin-left: 0;
-        width: 100%;
     }
 
-    #sidebar h2 {
-        font-size: 20px;
+    /* Make the table horizontally scrollable on small screens */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    #sidebar a {
-        font-size: 16px;
+    /* Ensuring the table has a minimum width that forces horizontal scrolling */
+    #attendance-table {
+        min-width: 600px;
+        /* Or a larger width if required */
+    }
+}
+
+/* Ensure Sidebar stays visible on larger screens */
+@media screen and (min-width: 769px) {
+    #sidebar {
+        transform: translateX(0);
     }
 
-    h1 {
-        font-size: 28px;
+    #page-content-wrapper {
+        margin-left: 250px;
     }
 }
