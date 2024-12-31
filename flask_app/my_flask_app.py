@@ -34,10 +34,11 @@ def fix_base64_padding(key):
     if padding_needed:
         key += '=' * (4 - padding_needed)
     return key
-    
+
 service_account_info['private_key'] = fix_base64_padding(service_account_info['private_key'])
 
-print('**'*50)
+# Debug: Printing the fixed private key (Only for local testing, avoid in production)
+print('**' * 50)
 print("Fixed private key:\n", service_account_info['private_key'])
 
 # Use the parsed JSON dictionary for Google Sheets credentials
