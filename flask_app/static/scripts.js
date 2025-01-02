@@ -58,25 +58,27 @@ function fetchStudentsForNetworker(networker, lessonId) {
         .then(response => response.json())
         .then(students => {
             const tableBody = document.getElementById('attendance-table').querySelector('tbody');
-            tableBody.innerHTML = '';
+            tableBody.innerHTML = ''; // Clear existing rows
 
             students.forEach(student => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                            <td>${student.name}</td>
-                            <td>
-                                <select data-student-id="${student.id}">
-                                    <option value="present">Present</option>
-                                    <option value="absent">Absent</option>
-                                    <option value="late">Late</option>
-                                </select>
-                            </td>
-                        `;
+                    <td>${student.reg_number}</td>
+                    <td>${student.name}</td>
+                    <td>
+                        <select data-student-id="${student.id}">
+                            <option value="present">Present</option>
+                            <option value="absent">Absent</option>
+                            <option value="late">Late</option>
+                        </select>
+                    </td>
+                `;
                 tableBody.appendChild(row);
             });
         })
         .catch(err => console.error('Error fetching students:', err));
 }
+
 
 function submitAttendance() {
     const lessonId = document.getElementById('lesson').value;
