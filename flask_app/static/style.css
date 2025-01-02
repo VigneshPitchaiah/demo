@@ -1,207 +1,197 @@
-/* Common CSS for Attendance Tracker */
-
-/* Global reset for consistent box sizing */
-* {
-    box-sizing: border-box;
-}
-
-/* Body styling */
+/* General Reset */
 body {
     margin: 0;
-    overflow-x: hidden;
+    padding: 0;
     font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+    background-color: #f4f9f9;
+    /* Soft light grey */
+    color: #4e4e4e;
+    /* Muted dark gray */
+    line-height: 1.6;
 }
 
-/* Sidebar styling */
-#sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 250px;
-    background-color: #343a40;
-    color: #ffffff;
-    overflow-y: auto;
-    padding: 20px;
-    transition: transform 0.3s ease-in-out;
-    z-index: 1000;
-    transform: translateX(-250px);
-    /* Sidebar starts off-screen */
+/* Navigation Bar */
+.navbar {
+    background-color: #6fa3ef;
+    /* Soft pastel blue */
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-#sidebar h2 {
+.navbar h1 {
+    margin: 0;
     font-size: 24px;
-    font-weight: bold;
+}
+
+.navbar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.navbar ul li {
+    margin-left: 20px;
+}
+
+.navbar ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.navbar ul li a:hover {
+    color: #ffb447;
+    /* Soft pastel yellow */
+}
+
+/* Container for layout */
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Heading styles */
+h1,
+h2 {
+    text-align: center;
+    color: #5f5f5f;
+    /* Muted gray */
     margin-bottom: 20px;
 }
 
-#sidebar ul {
-    list-style: none;
-    padding: 0;
-}
-
-#sidebar ul li {
-    margin-bottom: 15px;
-}
-
-#sidebar ul li a {
-    color: #ffffff;
-    text-decoration: none;
-    font-size: 18px;
-    display: block;
-    padding: 8px 10px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-#sidebar ul li a:hover {
-    background-color: #495057;
-}
-
-/* Page content styling */
-#page-content-wrapper {
-    margin-left: 250px;
-    padding: 20px;
-    overflow-x: hidden;
-    transition: margin-left 0.3s ease-in-out;
-}
-
-h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    color: #343a40;
-}
-
-/* Form styling */
-.form-select,
-.form-control {
+/* Select and Button Styles */
+select,
+button {
+    margin: 10px 0;
+    padding: 10px;
     width: 100%;
-    margin-bottom: 15px;
-    padding: 12px;
-    border-radius: 5px;
     border: 1px solid #ccc;
-}
-
-button[type="submit"] {
-    background-color: #007bff;
-    color: #ffffff;
+    border-radius: 4px;
     font-size: 16px;
-    font-weight: bold;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
+    background: #f4f9f9;
+    /* Light grey background */
+    transition: background 0.3s ease;
+}
+
+button {
+    background: #7cef6f;
+    /* Soft pastel blue */
+    color: #fff;
     cursor: pointer;
-    transition: background-color 0.3s;
 }
 
-button[type="submit"]:hover {
-    background-color: #0056b3;
+button:hover {
+    background: #5e91d4;
+    /* Slightly darker soft blue */
 }
 
-/* Table styling */
-.table-wrapper {
-    max-height: 500px;
-    overflow-y: auto;
-    background-color: #ffffff;
-}
-
-/* Table itself */
+/* Table Styles */
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #ffffff;
+    margin: 20px 0;
 }
 
-thead {
-    background-color: #343a40;
-    color: #ffffff;
-}
-
-th,
-td {
+table th,
+table td {
+    border: 1px solid #e1e1e1;
+    /* Light border for subtle contrast */
     padding: 12px;
-    border: 1px solid #dee2e6;
     text-align: center;
-    vertical-align: middle;
+    font-size: 14px;
 }
 
-th {
-    text-transform: uppercase;
-    font-weight: bold;
+table th {
+    background-color: #6fa3ef;
+    /* Soft pastel blue */
+    color: #fff;
 }
 
-tr:nth-child(even) {
-    background-color: #f8f9fa;
+table tr:nth-child(even) {
+    background-color: #f4f9f9;
+    /* Light gray */
 }
 
-tr:hover {
-    background-color: #e9ecef;
+table tr:hover {
+    background-color: #eef4fc;
+    /* Very light blue */
 }
 
-/* Search bar styling */
-#search-bar {
-    max-width: 300px;
-    margin-bottom: 20px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+/* Attendance Summary Section */
+.attendance-summary {
+    margin-top: 30px;
 }
 
-/* Toggle Sidebar Button */
-#sidebar-toggle {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: #343a40;
-    color: #ffffff;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    z-index: 1100;
-    display: none;
+.attendance-summary h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
 }
 
-/* Media Queries for Mobile Responsiveness */
-@media screen and (max-width: 768px) {
-    #sidebar {
-        transform: translateX(-250px);
+/* Responsive Navbar */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
-    #sidebar.active {
-        transform: translateX(0);
+    .navbar h1 {
+        margin-bottom: 10px;
+        font-size: 20px;
+        text-align: center;
+        flex: unset;
     }
 
-    #sidebar-toggle {
-        display: block;
+    .navbar ul {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
+        padding: 0;
+        margin: 0;
     }
 
-    #page-content-wrapper {
-        margin-left: 0;
+    .navbar ul li {
+        margin: 0 10px;
     }
 
-    /* Make the table horizontally scrollable on small screens */
-    .table-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Ensuring the table has a minimum width that forces horizontal scrolling */
-    #attendance-table {
-        min-width: 600px;
-        /* Or a larger width if required */
+    .navbar ul li a {
+        font-size: 14px;
     }
 }
 
-/* Ensure Sidebar stays visible on larger screens */
-@media screen and (min-width: 769px) {
-    #sidebar {
-        transform: translateX(0);
+@media (max-width: 480px) {
+
+    h1,
+    h2 {
+        font-size: 20px;
     }
 
-    #page-content-wrapper {
-        margin-left: 250px;
+    select,
+    button {
+        font-size: 12px;
+    }
+
+    table th,
+    table td {
+        font-size: 10px;
+    }
+
+    .navbar ul {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .navbar ul li {
+        margin: 10px 0;
     }
 }

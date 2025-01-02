@@ -1,67 +1,168 @@
-$(document).ready(function () {
-    // Handle Network Selection (unchanged)
-    $('#network').change(function () {
-        const network = $(this).val();
-        if (network) {
-            $.get(`/students/${network}`)
-                .done(function (data) {
-                    let studentHTML = '<table class="table-wrapper table-responsive" id="attendance-table">';  // Ensure proper ID
-                    studentHTML += '<tr><th>ID</th><th>Student</th><th>Will Join on 03</th><th>Cannot Join on 03</th><th>No Response</th><th>Comment</th></tr>';
-                    data.forEach(student => {
-                        studentHTML += ` 
-                            <tr>
-                                <td>${student.id}</td>
-                                <td>${student.name}</td>
-                                <td><input type="radio" name="status_${student.id}" value="Will Join on 03" aria-label="Will join on 03"></td>
-                                <td><input type="radio" name="status_${student.id}" value="Cannot Join on 03" aria-label="Cannot join on 03"></td>
-                                <td><input type="radio" name="status_${student.id}" value="No Response" aria-label="No response"></td>
-                                <td><input type="text" name="comment_${student.id}" class="form-control" placeholder="Add a comment" aria-label="Comment for ${student.name}"></td>
-                            </tr>`;
-                    });
-                    studentHTML += '</table>';
-                    $('#student-list').html(studentHTML);
+document.addEventListener("DOMContentLoaded", function () {
+    fetchLessons();
+    fetchNetworkers();
+    fetchAttendanceSummary();
+    fetchNetworkAttendanceSummary();
 
-                    // Re-enable the search functionality after the data is loaded
-                    enableSearch();  // Calling the search setup function
-                })
-                .fail(function () {
-                    $('#student-list').html('<p class="text-danger">Failed to load students. Please try again later.</p>');
-                });
-        } else {
-            $('#student-list').html('');
-        }
-    });
+    // Event listener for submitting attendance
+    document.getElementById('submit-button').addEventListener('click', submitAttendance);
+});
 
-    // Function to Enable the Search on the Table
-    function enableSearch() {
-        let debounceTimeout;
-        $('#search-bar').on('input', function () {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => {
-                const searchTerm = $(this).val().toLowerCase();
-                $('#student-list table tbody tr').each(function () {  // Ensure the search is targeting the correct table
-                    const studentName = $(this).find('td:nth-child(2)').text().toLowerCase();
-                    const status = $(this).find('td:nth-child(3)').text().toLowerCase();
-                    const comment = $(this).find('td:nth-child(4)').text().toLowerCase();
-                    const id = $(this).find('td:nth-child(1)').text().toLowerCase();
+function fetchLessons() {
+    fetch('/api/lessons')
+        .then(response => response.json())
+        .then(lessons => {
+            const lessonSelect = document.getElementById('lesson');
+            lessons.forEach(lesson => {
+                const option = document.createElement('option');
+                option.value = lesson.id;
+                option.textContent = lesson.title;
+                lessonSelect.appendChild(option);
+            });
 
-                    if (studentName.includes(searchTerm) || status.includes(searchTerm) || comment.includes(searchTerm) || id.includes(searchTerm)) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-            }, 300); // Debounce timeout of 300ms
-        });
+            lessonSelect.addEventListener('change', updateStudentTable);
+        })
+        .catch(err => console.error('Error fetching lessons:', err));
+}
+
+function fetchNetworkers() {
+    fetch('/api/networkers')
+        .then(response => response.json())
+        .then(networkers => {
+            const networkerSelect = document.getElementById('networker');
+            networkers.forEach(networker => {
+                const option = document.createElement('option');
+                option.value = networker;
+                option.textContent = networker;
+                networkerSelect.appendChild(option);
+            });
+
+            networkerSelect.addEventListener('change', updateStudentTable);
+        })
+        .catch(err => console.error('Error fetching networkers:', err));
+}
+
+function updateStudentTable() {
+    const lessonId = document.getElementById('lesson').value;
+    const networker = document.getElementById('networker').value;
+
+    if (lessonId && networker) {
+        fetchStudentsForNetworker(networker, lessonId);
+    } else {
+        document.getElementById('attendance-table').querySelector('tbody').innerHTML = '';
+    }
+}
+
+function fetchStudentsForNetworker(networker, lessonId) {
+    fetch(`/api/students?networker=${networker}&lesson_id=${lessonId}`)
+        .then(response => response.json())
+        .then(students => {
+            const tableBody = document.getElementById('attendance-table').querySelector('tbody');
+            tableBody.innerHTML = '';
+
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                            <td>${student.name}</td>
+                            <td>
+                                <select data-student-id="${student.id}">
+                                    <option value="present">Present</option>
+                                    <option value="absent">Absent</option>
+                                    <option value="late">Late</option>
+                                </select>
+                            </td>
+                        `;
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(err => console.error('Error fetching students:', err));
+}
+
+function submitAttendance() {
+    const lessonId = document.getElementById('lesson').value;
+    const networker = document.getElementById('networker').value;
+
+    if (!lessonId || !networker) {
+        alert('Please select a lesson and a networker.');
+        return;
     }
 
-    // Sidebar toggle functionality
-    $('#sidebar-toggle').click(function () {
-        const sidebar = $('#sidebar');
-        const pageContentWrapper = $('#page-content-wrapper');
-
-        // Toggle active class for both sidebar and page content wrapper
-        sidebar.toggleClass('active');
-        pageContentWrapper.toggleClass('active');
+    const attendanceData = [];
+    const selects = document.querySelectorAll('#attendance-table select');
+    selects.forEach(select => {
+        const studentId = select.dataset.studentId;
+        const status = select.value;
+        attendanceData.push({
+            student_id: studentId,
+            lesson_id: lessonId,
+            status: status
+        });
     });
-});
+
+    fetch('/api/attendance', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(attendanceData)
+    })
+        .then(response => response.json())
+        .then(() => {
+            alert('Attendance marked successfully!');
+        })
+        .catch(err => console.error('Error submitting attendance:', err));
+}
+
+function fetchAttendanceSummary() {
+    fetch('/api/attendance_summary')
+        .then(response => response.json())
+        .then(data => {
+            const lessonTableBody = document.getElementById('lesson-attendance-summary').querySelector('tbody');
+            lessonTableBody.innerHTML = '';
+
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                            <td>${item.lesson_title}</td>
+                            <td>${item.present_count}</td>
+                            <td>${item.absent_count}</td>
+                            <td>${item.late_count}</td>
+                        `;
+                    lessonTableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4">No data available</td>`;
+                lessonTableBody.appendChild(row);
+            }
+        })
+        .catch(err => console.error('Error fetching attendance summary:', err));
+}
+
+function fetchNetworkAttendanceSummary() {
+    fetch('/api/network_attendance')
+        .then(response => response.json())
+        .then(data => {
+            const networkTableBody = document.getElementById('network-attendance-summary').querySelector('tbody');
+            networkTableBody.innerHTML = '';
+
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                            <td>${item.networker}</td>
+                            <td>${item.present_percent.toFixed(2)}%</td>
+                            <td>${item.absent_percent.toFixed(2)}%</td>
+                            <td>${item.late_percent.toFixed(2)}%</td>
+                        `;
+                    networkTableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4">No data available</td>`;
+                networkTableBody.appendChild(row);
+            }
+        })
+        .catch(err => console.error('Error fetching network attendance summary:', err));
+}
