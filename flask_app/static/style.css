@@ -52,7 +52,8 @@ body {
 
 /* Container for layout */
 .container {
-    max-width: 800px;
+    max-width: 900px;
+    /* Increased max-width for more spacious content */
     margin: 20px auto;
     padding: 20px;
     background: #fff;
@@ -100,6 +101,8 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
+    table-layout: fixed;
+    /* Prevents table from resizing dynamically */
 }
 
 table th,
@@ -109,6 +112,8 @@ table td {
     padding: 12px;
     text-align: center;
     font-size: 14px;
+    word-wrap: break-word;
+    /* Handles long text gracefully */
 }
 
 table th {
@@ -173,13 +178,14 @@ table tr:hover {
     }
 
     .navbar ul {
-        display: flex;
+        display: none;
         flex-direction: row;
         justify-content: space-around;
         width: 100%;
         padding: 0;
         margin: 0;
     }
+
 
     .navbar ul li {
         margin: 0 10px;
@@ -225,5 +231,11 @@ table tr:hover {
 
     .navbar ul li {
         margin: 10px 0;
+    }
+
+    /* Allow table to scroll horizontally on small screens */
+    table {
+        overflow-x: auto;
+        display: block;
     }
 }

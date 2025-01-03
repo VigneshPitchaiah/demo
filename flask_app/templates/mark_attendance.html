@@ -63,13 +63,9 @@
 
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const hamburger = document.querySelector('.hamburger');
+        document.querySelector('.hamburger').addEventListener('click', function () {
             const navbar = document.querySelector('.navbar');
-
-            hamburger.addEventListener('click', function () {
-                navbar.classList.toggle('active');
-            });
+            navbar.classList.toggle('active'); // Toggle the "active" class
         });
         document.getElementById('submit-button').addEventListener('click', submitAttendance);
     </script>
