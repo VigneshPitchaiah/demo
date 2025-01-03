@@ -114,7 +114,7 @@ def get_attendance_stats():
     return jsonify(stats)
 
 # API to get attendance summary per lesson
-@app.route('/api/attendance_summary', methods=['GET'])
+@app.route('/api/attendance_summary_report', methods=['GET'])
 def attendance_summary():
     try:
         # Fetch all attendance records
@@ -216,6 +216,41 @@ def network_attendance():
         print("Error:", str(e))
         return jsonify({'error': str(e)}), 500
 
+
+# New route to display the detailed attendance records
+@app.route('/attendance_details')
+def attendance_details():
+    try:
+        # Define the SQL query for attendance summary per student and lesson
+        query = """
+        SELECT 
+            s.networker AS networker_role,
+            s.name AS student_name,
+            l.title AS lesson_title,
+            a.status AS attendance_status,
+            CAST(COUNT(a.id) AS integer) AS count_status
+        FROM 
+            public.students s
+        LEFT JOIN 
+            public.attendance a ON s.id = a.student_id
+        LEFT JOIN 
+            public.lessons l ON a.lesson_id = l.id
+        GROUP BY 
+            s.networker, s.name, l.title, a.status
+        ORDER BY 
+            attendance_status;
+        """
+        
+        # Execute the query using Supabase
+        response = supabase.rpc('execute_raw_sql', {'query': query}).execute()
+
+        if response.data:
+            return render_template('attendance_details.html', records=response.data)
+        else:
+            return "No data found", 404
+
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 
 if __name__ == '__main__':

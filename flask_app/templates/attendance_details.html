@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Summary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        #attendance-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+            table-layout: fixed;
+            max-height: 400px;
+            overflow-y: scroll;
+        }
+
+        #attendance-details-table th,
+        #attendance-details-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #attendance-details-table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #484343;
+            z-index: 1;
+            min-width: 250px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .filter-input {
+            padding: 5px;
+            width: 200px;
+        }
+
+        .download-icon {
+            cursor: pointer;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+
+    <nav class="navbar">
+        <div class="hamburger">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <h1>Attendance Management System</h1>
+
+        <ul>
+            <li><a href="/mark_attendance">Mark Attendance</a></li>
+            <li><a href="/attendance_summary">Class Summary</a></li>
+            <li><a href="/attendance_details">Report</a></li>
+        </ul>
+    </nav>
+    <br>
+    <!-- Attendance Summary Content -->
+    <div class="container attendance-summary" id="attendance-summary">
+        <h2>Attendance Details</h2>
+
+        <div class="actions">
+            <input type="text" id="filter-input" class="filter-input" placeholder="Filter by name..."
+                onkeyup="filterTable()">
+            <select id="status-filter" class="filter-input" onchange="filterTable()">
+                <option value="">All Statuses</option>
+                <option value="Present">present</option>
+                <option value="Absent/Not Intrested">Absent/Not Intrested</option>
+                <option value="Will take Recording">Will take Recording</option>
+            </select>
+            <i id="download-icon" class="fas fa-download download-icon"></i>
+        </div>
+
+
+        <table id="attendance-details-table">
+            <thead>
+                <tr>
+                    <th>Networker Role</th>
+                    <th>Student Name</th>
+                    <th>Lesson Title</th>
+                    <th>Attendance Status</th>
+                    <th>Count Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.networker_role }}</td>
+                    <td>{{ record.student_name }}</td>
+                    <td>{{ record.lesson_title }}</td>
+                    <td>{{ record.attendance_status }}</td>
+                    <td>{{ record.count_status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <script>
+        // Hamburger menu toggle
+        document.querySelector('.hamburger').addEventListener('click', function () {
+            const navbar = document.querySelector('.navbar');
+            navbar.classList.toggle('active');
+        });
+
+        // Filter function
+        function filterTable() {
+            const nameInput = document.getElementById('filter-input').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('status-filter').value.trim().toLowerCase();
+            const table = document.getElementById('attendance-details-table');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                const networker = cells[0].innerText.trim().toLowerCase();
+                const name = cells[1].innerText.trim().toLowerCase();
+                const status = cells[3].innerText.trim().toLowerCase();
+
+                const nameOrNetworkerMatch = networker.includes(nameInput) || name.includes(nameInput);
+                const statusMatch = statusFilter === "" || status === statusFilter;
+
+                rows[i].style.display = nameOrNetworkerMatch && statusMatch ? '' : 'none';
+            }
+        }
+
+
+
+        // Download CSV function
+        document.getElementById('download-icon').addEventListener('click', function () {
+            const table = document.getElementById('attendance-details-table');
+            const rows = table.getElementsByTagName('tr');
+            let csvContent = '';
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName(i === 0 ? 'th' : 'td');
+                const row = Array.from(cells).map(cell => cell.innerText.replace(/,/g, '')).join(',');
+                csvContent += row + '\n';
+            }
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'attendance_summary.csv';
+            link.click();
+        });
+
+    </script>
+</body>
+
+</html>

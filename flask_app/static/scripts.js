@@ -67,9 +67,9 @@ function fetchStudentsForNetworker(networker, lessonId) {
                     <td>${student.name}</td>
                     <td>
                         <select data-student-id="${student.id}">
-                            <option value="present">Present</option>
-                            <option value="absent">Absent/Not Intrested</option>
-                            <option value="late">Will take Recording</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent/Not Intrested">Absent/Not Intrested</option>
+                            <option value="Will take Recording">Will take Recording</option>
                         </select>
                     </td>
                     <td>
@@ -135,7 +135,7 @@ function submitAttendance() {
 
 // Function to fetch and display attendance summary for a specific lesson
 function fetchAttendanceSummary(lessonId) {
-    fetch(`/api/attendance_summary?lesson_id=${lessonId}`)
+    fetch(`/api/attendance_summary_report?lesson_id=${lessonId}`)
         .then(response => response.json())
         .then(data => {
             const lessonTableBody = document.getElementById('lesson-attendance-summary').querySelector('tbody');
