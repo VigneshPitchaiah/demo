@@ -37,7 +37,7 @@
             top: 0;
             background-color: #484343;
             z-index: 1;
-            min-width: 250px;
+            min-width: 290px;
         }
 
         .actions {
@@ -105,7 +105,6 @@
                     <th>Student Name</th>
                     <th>Lesson Title</th>
                     <th>Attendance Status</th>
-                    <th>Count Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,7 +114,6 @@
                     <td>{{ record.student_name }}</td>
                     <td>{{ record.lesson_title }}</td>
                     <td>{{ record.attendance_status }}</td>
-                    <td>{{ record.count_status }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
