@@ -137,7 +137,28 @@ table tr:hover {
     margin-bottom: 10px;
 }
 
-/* Responsive Navbar */
+/* Hamburger Icon (Mobile) */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 25px;
+    cursor: pointer;
+    position: absolute;
+    right: 20px;
+    /* Position hamburger to the right */
+    top: 15px;
+    /* Center it vertically */
+}
+
+.hamburger div {
+    width: 100%;
+    height: 4px;
+    background-color: #333;
+}
+
+/* Responsive Navbar for tablet (max-width: 768px) */
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
@@ -167,8 +188,19 @@ table tr:hover {
     .navbar ul li a {
         font-size: 14px;
     }
+
+    /* Show hamburger menu */
+    .hamburger {
+        display: flex;
+    }
+
+    /* Show the menu when 'active' class is added to navbar */
+    .navbar.active ul {
+        display: flex;
+    }
 }
 
+/* Responsive Navbar for small mobile devices (max-width: 480px) */
 @media (max-width: 480px) {
 
     h1,

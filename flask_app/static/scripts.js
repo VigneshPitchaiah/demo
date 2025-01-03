@@ -3,9 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
     fetchNetworkers();
     fetchAttendanceSummary();
     fetchNetworkAttendanceSummary();
+    fetchAttendanceReport();
 
-    // Event listener for submitting attendance
-    document.getElementById('submit-button').addEventListener('click', submitAttendance);
+
 });
 
 function fetchLessons() {
@@ -68,9 +68,12 @@ function fetchStudentsForNetworker(networker, lessonId) {
                     <td>
                         <select data-student-id="${student.id}">
                             <option value="present">Present</option>
-                            <option value="absent">Absent</option>
-                            <option value="late">Late</option>
+                            <option value="absent">Absent/Not Intrested</option>
+                            <option value="late">Will take Recording</option>
                         </select>
+                    </td>
+                    <td>
+                        <textarea data-student-id="${student.id}" placeholder="Enter comment"></textarea> <!-- Comment box -->
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -78,7 +81,6 @@ function fetchStudentsForNetworker(networker, lessonId) {
         })
         .catch(err => console.error('Error fetching students:', err));
 }
-
 
 function submitAttendance() {
     const lessonId = document.getElementById('lesson').value;
@@ -90,15 +92,26 @@ function submitAttendance() {
     }
 
     const attendanceData = [];
-    const selects = document.querySelectorAll('#attendance-table select');
-    selects.forEach(select => {
-        const studentId = select.dataset.studentId;
-        const status = select.value;
-        attendanceData.push({
-            student_id: studentId,
-            lesson_id: lessonId,
-            status: status
-        });
+    const rows = document.querySelectorAll('#attendance-table tbody tr');
+    rows.forEach((row, index) => {
+        const select = row.querySelector('select');
+        const textarea = row.querySelector('textarea');
+
+        if (select && textarea) {
+            console.log(`Row ${index}:`, {
+                student_id: select.dataset.studentId,
+                status: select.value,
+                comment: textarea.value,
+            });
+            attendanceData.push({
+                student_id: select.dataset.studentId,
+                lesson_id: lessonId,
+                status: select.value,
+                comment: textarea.value || '',
+            });
+        } else {
+            console.error(`Row ${index} is missing select or textarea elements.`);
+        }
     });
 
     fetch('/api/attendance', {
@@ -106,34 +119,42 @@ function submitAttendance() {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(attendanceData)
+        body: JSON.stringify(attendanceData),
     })
         .then(response => response.json())
-        .then(() => {
-            alert('Attendance marked successfully!');
+        .then(response => {
+            if (response.error) {
+                alert(`Error: ${response.error}`);
+            } else {
+                alert('Attendance marked successfully!');
+                window.location.reload();  // Refresh the page after submission
+            }
         })
         .catch(err => console.error('Error submitting attendance:', err));
 }
 
-function fetchAttendanceSummary() {
-    fetch('/api/attendance_summary')
+// Function to fetch and display attendance summary for a specific lesson
+function fetchAttendanceSummary(lessonId) {
+    fetch(`/api/attendance_summary?lesson_id=${lessonId}`)
         .then(response => response.json())
         .then(data => {
             const lessonTableBody = document.getElementById('lesson-attendance-summary').querySelector('tbody');
-            lessonTableBody.innerHTML = '';
+            lessonTableBody.innerHTML = '';  // Clear any previous data
 
             if (data && Array.isArray(data) && data.length > 0) {
+                // Loop through the data and add rows to the table
                 data.forEach(item => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                            <td>${item.lesson_title}</td>
-                            <td>${item.present_count}</td>
-                            <td>${item.absent_count}</td>
-                            <td>${item.late_count}</td>
-                        `;
+                        <td>${item.lesson_title}</td>
+                        <td>${item.present_count}</td>
+                        <td>${item.absent_count}</td>
+                        <td>${item.late_count}</td>
+                    `;
                     lessonTableBody.appendChild(row);
                 });
             } else {
+                // If no data, display a message in the table
                 const row = document.createElement('tr');
                 row.innerHTML = `<td colspan="4">No data available</td>`;
                 lessonTableBody.appendChild(row);
@@ -142,25 +163,28 @@ function fetchAttendanceSummary() {
         .catch(err => console.error('Error fetching attendance summary:', err));
 }
 
-function fetchNetworkAttendanceSummary() {
-    fetch('/api/network_attendance')
+// Function to fetch and display networker attendance summary for a specific networker
+function fetchNetworkAttendanceSummary(networker) {
+    fetch(`/api/network_attendance?networker=${networker}`)
         .then(response => response.json())
         .then(data => {
             const networkTableBody = document.getElementById('network-attendance-summary').querySelector('tbody');
-            networkTableBody.innerHTML = '';
+            networkTableBody.innerHTML = '';  // Clear any previous data
 
             if (data && Array.isArray(data) && data.length > 0) {
+                // Loop through the data and add rows to the table
                 data.forEach(item => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                            <td>${item.networker}</td>
-                            <td>${item.present_percent.toFixed(2)}%</td>
-                            <td>${item.absent_percent.toFixed(2)}%</td>
-                            <td>${item.late_percent.toFixed(2)}%</td>
-                        `;
+                        <td>${item.networker}</td>
+                        <td>${item.present_percent.toFixed(2)}%</td>
+                        <td>${item.absent_percent.toFixed(2)}%</td>
+                        <td>${item.late_percent.toFixed(2)}%</td>
+                    `;
                     networkTableBody.appendChild(row);
                 });
             } else {
+                // If no data, display a message in the table
                 const row = document.createElement('tr');
                 row.innerHTML = `<td colspan="4">No data available</td>`;
                 networkTableBody.appendChild(row);

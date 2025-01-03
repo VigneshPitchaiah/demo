@@ -11,8 +11,13 @@ SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+@app.route('/mark_attendance')
+def mark_attendance():
+    return render_template('mark_attendance.html')
+
+@app.route('/attendance_summary')
+def attendance_summary_page():
+    return render_template('attendance_summary.html')
 
 # API to fetch all lessons
 @app.route('/api/lessons', methods=['GET'])
@@ -43,38 +48,36 @@ def get_students_for_networker():
 
 @app.route('/api/attendance', methods=['POST'])
 def submit_attendance():
-    attendance_data = request.json
     try:
-        # Start by logging the incoming data
-        print(f"Attendance data received: {attendance_data}")
+        attendance_data = request.json
+
+        # Validate data format
+        if not isinstance(attendance_data, list):
+            return jsonify({'error': 'Invalid attendance data format, expected an array.'}), 400
         
-        # Insert attendance records one by one
         for record in attendance_data:
             student_id = record['student_id']
             lesson_id = record['lesson_id']
             status = record['status']
+            comment = record.get('comment', '')
 
-            # Debugging logs for each record before inserting
-            print(f"Inserting attendance for student {student_id} in lesson {lesson_id} with status {status}")
-
-            # Check if student exists in students table
+            # Check if student and lesson exist
             student_response = supabase.table('students').select('id').eq('id', student_id).execute()
-            if not student_response.data:
-                raise Exception(f"Student with id {student_id} does not exist.")
-            
-            # Check if lesson exists in lessons table
             lesson_response = supabase.table('lessons').select('id').eq('id', lesson_id).execute()
-            if not lesson_response.data:
-                raise Exception(f"Lesson with id {lesson_id} does not exist.")
 
-            # Insert into attendance table
+            if not student_response.data:
+                return jsonify({'error': f"Student with id {student_id} does not exist."}), 400
+            if not lesson_response.data:
+                return jsonify({'error': f"Lesson with id {lesson_id} does not exist."}), 400
+
+            # Insert attendance
             response = supabase.table('attendance').insert({
                 'student_id': student_id,
                 'lesson_id': lesson_id,
-                'status': status
+                'status': status,
+                'comment': comment
             }).execute()
-
-            # Check if the response has 'data' to confirm success
+            # Check if the insertion was successful
             if response.data:  # Check if data exists in the response
                 print(f"Attendance successfully marked for student {student_id} in lesson {lesson_id}")
             elif response.error:  # Check if an error is present
@@ -88,7 +91,7 @@ def submit_attendance():
         # Log the error and return the error message
         print(f"Error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
+    
 # API to get attendance statistics
 @app.route('/api/attendance/stats', methods=['GET'])
 def get_attendance_stats():
@@ -212,6 +215,7 @@ def network_attendance():
     except Exception as e:
         print("Error:", str(e))
         return jsonify({'error': str(e)}), 500
+
 
 
 if __name__ == '__main__':

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Summary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="hamburger">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <h1>Attendance Management System</h1>
+
+        <ul>
+            <li><a href="/mark_attendance">Mark Attendance</a></li>
+            <li><a href="/attendance_summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <!-- Attendance Summary Content -->
+    <div class="container attendance-summary" id="attendance-summary">
+        <h1>Attendance Summary</h1>
+
+        <h2>Lesson Attendance Summary</h2>
+        <table id="lesson-attendance-summary">
+            <thead>
+                <tr>
+                    <th>Lesson Title</th>
+                    <th>Present</th>
+                    <th>Absent/Not Intrested</th>
+                    <th>Will Take Recording</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dynamic lesson attendance data will go here -->
+            </tbody>
+        </table>
+
+        <h2>Network Attendance Summary</h2>
+        <table id="network-attendance-summary">
+            <thead>
+                <tr>
+                    <th>Network</th>
+                    <th>Present (%)</th>
+                    <th>Absent/Not Intrested (%)</th>
+                    <th>Will Take Recording (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dynamic network attendance data will go here -->
+            </tbody>
+        </table>
+
+
+
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburger = document.querySelector('.hamburger');
+            const navbar = document.querySelector('.navbar');
+
+            hamburger.addEventListener('click', function () {
+                navbar.classList.toggle('active');
+            });
+        });
+        document.getElementById('submit-button').addEventListener('click', submitAttendance);
+    </script>
+</body>
+
+</html>
