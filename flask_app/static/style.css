@@ -25,6 +25,8 @@ body {
 .navbar h1 {
     margin: 0;
     font-size: 24px;
+    text-align: center;
+    flex-grow: 1;
 }
 
 .navbar ul {
@@ -170,12 +172,17 @@ table tr:hover {
         align-items: flex-start;
     }
 
+    /* Fix Navbar h1 styling */
     .navbar h1 {
-        margin-bottom: 10px;
         font-size: 20px;
+        /* Slightly smaller font on mobile */
         text-align: center;
-        flex: unset;
+        flex-grow: 1;
+        /* Allow it to grow and push hamburger to the right */
+        padding-right: 40px;
+        /* Adds space for the hamburger icon */
     }
+
 
     .navbar ul {
         display: none;
