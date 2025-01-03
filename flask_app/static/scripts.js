@@ -52,7 +52,6 @@ function updateStudentTable() {
         document.getElementById('attendance-table').querySelector('tbody').innerHTML = '';
     }
 }
-
 function fetchStudentsForNetworker(networker, lessonId) {
     fetch(`/api/students?networker=${networker}&lesson_id=${lessonId}`)
         .then(response => response.json())
@@ -67,8 +66,9 @@ function fetchStudentsForNetworker(networker, lessonId) {
                     <td>${student.name}</td>
                     <td>
                         <select data-student-id="${student.id}">
+                            <option value="" selected disabled>Select Status</option> <!-- Default empty value -->
                             <option value="Present">Present</option>
-                            <option value="Absent/Not Intrested">Absent/Not Intrested</option>
+                            <option value="Absent/Not Interested">Absent/Not Interested</option>
                             <option value="Will take Recording">Will take Recording</option>
                         </select>
                     </td>
@@ -82,6 +82,7 @@ function fetchStudentsForNetworker(networker, lessonId) {
         .catch(err => console.error('Error fetching students:', err));
 }
 
+
 function submitAttendance() {
     const lessonId = document.getElementById('lesson').value;
     const networker = document.getElementById('networker').value;
@@ -92,27 +93,35 @@ function submitAttendance() {
     }
 
     const attendanceData = [];
+    let isAtLeastOneStatusSelected = false; // Flag to check if any status is selected
+
     const rows = document.querySelectorAll('#attendance-table tbody tr');
     rows.forEach((row, index) => {
         const select = row.querySelector('select');
         const textarea = row.querySelector('textarea');
 
         if (select && textarea) {
-            console.log(`Row ${index}:`, {
-                student_id: select.dataset.studentId,
-                status: select.value,
-                comment: textarea.value,
-            });
+            const status = select.value;
+
+            if (status) {
+                isAtLeastOneStatusSelected = true; // Set the flag to true if a status is selected
+            }
+
             attendanceData.push({
                 student_id: select.dataset.studentId,
                 lesson_id: lessonId,
-                status: select.value,
+                status: status,
                 comment: textarea.value || '',
             });
         } else {
             console.error(`Row ${index} is missing select or textarea elements.`);
         }
     });
+
+    if (!isAtLeastOneStatusSelected) {
+        alert('Please select a status for at least one student.');
+        return;
+    }
 
     fetch('/api/attendance', {
         method: 'POST',
@@ -132,6 +141,7 @@ function submitAttendance() {
         })
         .catch(err => console.error('Error submitting attendance:', err));
 }
+
 
 // Function to fetch and display attendance summary for a specific lesson
 function fetchAttendanceSummary(lessonId) {
