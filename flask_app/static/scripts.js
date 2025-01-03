@@ -67,7 +67,7 @@ function fetchStudentsForNetworker(networker, lessonId) {
                     <td>
                         <select data-student-id="${student.id}">
                             <option value="" selected disabled>Select Status</option> <!-- Default empty value -->
-                            <option value="Present">Present</option>
+                            <option value="present">present</option>
                             <option value="Absent/Not Interested">Absent/Not Interested</option>
                             <option value="Will take Recording">Will take Recording</option>
                         </select>
