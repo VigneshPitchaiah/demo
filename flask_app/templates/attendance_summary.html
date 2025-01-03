@@ -7,6 +7,34 @@
     <title>Attendance Summary</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+<style>
+    /* Style for the scrollable table container */
+    .scrollable-table {
+        max-height: 400px;
+        /* Set the max height you want */
+        overflow-y: auto;
+        /* Enable vertical scrolling */
+        margin-bottom: 20px;
+        /* Add some spacing between tables */
+    }
+
+    /* Optional: Style the table for better appearance */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 8px;
+        text-align: left;
+        border: 1px solid #ddd;
+    }
+
+    thead {
+        background-color: #f2f2f2;
+    }
+</style>
 
 <body>
     <!-- Navigation Bar -->
@@ -30,38 +58,40 @@
         <h1>Attendance Summary</h1>
 
         <h2>Lesson Attendance Summary</h2>
-        <table id="lesson-attendance-summary">
-            <thead>
-                <tr>
-                    <th>Lesson Title</th>
-                    <th>Present</th>
-                    <th>Absent/Not Intrested</th>
-                    <th>Will Take Recording</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Dynamic lesson attendance data will go here -->
-            </tbody>
-        </table>
+        <div class="scrollable-table">
+            <table id="lesson-attendance-summary">
+                <thead>
+                    <tr>
+                        <th>Lesson Title</th>
+                        <th>Present</th>
+                        <th>Absent/Not Interested</th>
+                        <th>Will Take Recording</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic lesson attendance data will go here -->
+                </tbody>
+            </table>
+        </div>
 
         <h2>Network Attendance Summary</h2>
-        <table id="network-attendance-summary">
-            <thead>
-                <tr>
-                    <th>Network</th>
-                    <th>Present (%)</th>
-                    <th>Absent/Not Intrested (%)</th>
-                    <th>Will Take Recording (%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Dynamic network attendance data will go here -->
-            </tbody>
-        </table>
-
-
-
+        <div class="scrollable-table">
+            <table id="network-attendance-summary">
+                <thead>
+                    <tr>
+                        <th>Network</th>
+                        <th>Present (%)</th>
+                        <th>Absent/Not Interested (%)</th>
+                        <th>Will Take Recording (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic network attendance data will go here -->
+                </tbody>
+            </table>
+        </div>
     </div>
+
 
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 

@@ -186,7 +186,7 @@ def network_attendance():
 
                 if networker:
                     if networker not in network_data:
-                        network_data[networker] = {'present': 0, 'Absent/Not Intrested': 0, 'Will take Recording': 0, 'total': 0}
+                        network_data[networker] = {'present': 0, 'Absent/Not Interested': 0, 'Will take Recording': 0, 'total': 0}
 
                     network_data[networker]['total'] += 1
                     network_data[networker][status] += 1
@@ -195,7 +195,7 @@ def network_attendance():
             network_summary = []
             for networker, stats in network_data.items():
                 present_percent = (stats['present'] / stats['total']) * 100 if stats['total'] > 0 else 0
-                absent_percent = (stats['Absent/Not Intrested'] / stats['total']) * 100 if stats['total'] > 0 else 0
+                absent_percent = (stats['Absent/Not Interested'] / stats['total']) * 100 if stats['total'] > 0 else 0
                 late_percent = (stats['Will take Recording'] / stats['total']) * 100 if stats['total'] > 0 else 0
 
                 network_summary.append({
