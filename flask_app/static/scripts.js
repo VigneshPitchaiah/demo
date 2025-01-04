@@ -173,6 +173,7 @@ function fetchAttendanceSummary(lessonId) {
         .catch(err => console.error('Error fetching attendance summary:', err));
 }
 
+
 // Function to fetch and display networker attendance summary for a specific networker
 function fetchNetworkAttendanceSummary(networker) {
     fetch(`/api/network_attendance?networker=${networker}`)
@@ -185,18 +186,20 @@ function fetchNetworkAttendanceSummary(networker) {
                 // Loop through the data and add rows to the table
                 data.forEach(item => {
                     const row = document.createElement('tr');
+
                     row.innerHTML = `
                         <td>${item.networker}</td>
                         <td>${item.present_percent.toFixed(2)}%</td>
                         <td>${item.absent_percent.toFixed(2)}%</td>
                         <td>${item.late_percent.toFixed(2)}%</td>
+                        <td>${item.unknown_percent.toFixed(2)}%</td>
                     `;
                     networkTableBody.appendChild(row);
                 });
             } else {
                 // If no data, display a message in the table
                 const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="4">No data available</td>`;
+                row.innerHTML = `<td colspan="5">No data available</td>`;
                 networkTableBody.appendChild(row);
             }
         })

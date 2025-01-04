@@ -13,16 +13,26 @@
             max-width: 1200px;
             margin: auto;
             padding: 20px;
+            overflow: hidden;
+            /* Prevents container overflow */
         }
+
+        #attendance-details-table-wrapper {
+            width: 100%;
+            max-height: 700px;
+            /* Set a max height for the table wrapper */
+            overflow-x: auto;
+            /* Horizontal scroll if needed */
+            overflow-y: auto;
+            /* Vertical scroll for large tables */
+        }
+
 
         #attendance-details-table {
             width: 100%;
             border-collapse: collapse;
-            overflow-x: auto;
-            display: block;
-            table-layout: fixed;
-            max-height: 400px;
-            overflow-y: scroll;
+            table-layout: auto;
+            /* Allows columns to adjust width */
         }
 
         #attendance-details-table th,
@@ -30,26 +40,36 @@
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
+            min-width: 150px;
+            /* Ensures minimum width for columns */
         }
 
         #attendance-details-table thead th {
             position: sticky;
             top: 0;
-            background-color: #484343;
+            background-color: #81c784;
             z-index: 1;
-            min-width: 290px;
+            min-width: 100px;
+            /* Ensures minimum width for columns */
         }
 
         .actions {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            /* Allow wrapping for small screens */
+            gap: 10px;
+            justify-content: flex-start;
             align-items: center;
             margin-top: 10px;
         }
 
         .filter-input {
             padding: 5px;
-            width: 200px;
+            width: 100%;
+            /* Full width for better wrapping */
+            max-width: 200px;
+            /* Prevents overflow */
+            box-sizing: border-box;
         }
 
         .download-icon {
@@ -59,13 +79,55 @@
             color: white;
             border: none;
             border-radius: 4px;
+            display: inline-block;
+            width: auto;
+            max-width: 100%;
+            /* Ensures no overflow */
+        }
+
+
+
+        @media (max-width: 768px) {
+            #attendance-details-table {
+                font-size: 12px;
+                /* Reduce font size on small screens */
+            }
+
+            #attendance-details-table th,
+            #attendance-details-table td {
+                padding: 5px;
+                /* Reduce padding to fit more content */
+            }
+
+            .filter-input,
+            .download-icon {
+                width: 100%;
+                /* Full width on smaller screens */
+                text-align: center;
+            }
+
+            .actions {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            #attendance-details-table {
+                display: block;
+                overflow-x: auto;
+                /* Add horizontal scroll for very small screens */
+                max-height: 300px;
+            }
         }
     </style>
 </head>
 
 <body>
     <!-- Navigation Bar -->
-
     <nav class="navbar">
         <div class="hamburger">
             <div></div>
@@ -86,48 +148,79 @@
         <h2>Attendance Details</h2>
 
         <div class="actions">
-            <input type="text" id="filter-input" class="filter-input" placeholder="Filter by name..."
+            <input type="text" id="filter-input" class="filter-input" placeholder="Search here..."
                 onkeyup="filterTable()">
             <select id="status-filter" class="filter-input" onchange="filterTable()">
                 <option value="">All Statuses</option>
-                <option value="Present">present</option>
-                <option value="Absent/Not Intrested">Absent/Not Intrested</option>
+                <option value="Present">Present</option>
+                <option value="Absent/Not Interested">Absent/Not Interested</option>
                 <option value="Will take Recording">Will take Recording</option>
             </select>
-            <i id="download-icon" class="fas fa-download download-icon"></i>
+            <i id="download-icon" class="fas fa-download download-icon" title="Download as CSV"></i>
+
         </div>
 
-
-        <table id="attendance-details-table">
-            <thead>
-                <tr>
-                    <th>Networker Role</th>
-                    <th>Student Name</th>
-                    <th>Lesson Title</th>
-                    <th>Attendance Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in records %}
-                <tr>
-                    <td>{{ record.networker_role }}</td>
-                    <td>{{ record.student_name }}</td>
-                    <td>{{ record.lesson_title }}</td>
-                    <td>{{ record.attendance_status }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div id="attendance-details-table-wrapper">
+            <table id="attendance-details-table">
+                <thead>
+                    <tr>
+                        <th>Networker Name</th>
+                        <th>Reg Number</th>
+                        <th>Student Name</th>
+                        <th>BB1</th>
+                        <th>Review 1</th>
+                        <th>BB2</th>
+                        <th>BB3</th>
+                        <th>Review 2-3</th>
+                        <th>BB4</th>
+                        <th>BB5</th>
+                        <th>Review 4-5</th>
+                        <th>BB6</th>
+                    </tr>
+                </thead>
+                <tbody id="attendance-details-body">
+                    <!-- Data will be injected here via JavaScript -->
+                </tbody>
+            </table>
+        </div>
 
     </div>
 
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
     <script>
-        // Hamburger menu toggle
-        document.querySelector('.hamburger').addEventListener('click', function () {
-            const navbar = document.querySelector('.navbar');
-            navbar.classList.toggle('active');
-        });
+        // Sample function to simulate getting data from the server
+        async function fetchAttendanceData() {
+            const response = await fetch('/attendance_details'); // Replace with your endpoint
+            const data = await response.json();
+            return data;
+        }
+
+        const records = {{ records | tojson }}; // Assuming the data is rendered via Jinja or similar
+
+        // Function to populate the table with the attendance data
+        function populateTable() {
+            const tableBody = document.getElementById('attendance-details-body');
+            tableBody.innerHTML = ''; // Clear any existing rows
+
+            records.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${record.networker_name || ''}</td>
+                    <td>${record.reg_number || ''}</td>
+                    <td>${record.student_name || ''}</td>
+                    <td>${record.bb1 || ''}</td>
+                    <td>${record.review1 || ''}</td>
+                    <td>${record.bb2 || ''}</td>
+                    <td>${record.bb3 || ''}</td>
+                    <td>${record.review2_3 || ''}</td>
+                    <td>${record.bb4 || ''}</td>
+                    <td>${record.bb5 || ''}</td>
+                    <td>${record.review4_5 || ''}</td>
+                    <td>${record.bb6 || ''}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
 
         // Filter function
         function filterTable() {
@@ -138,31 +231,55 @@
 
             for (let i = 0; i < rows.length; i++) {
                 const cells = rows[i].getElementsByTagName('td');
-                const networker = cells[0].innerText.trim().toLowerCase();
-                const name = cells[1].innerText.trim().toLowerCase();
-                const status = cells[3].innerText.trim().toLowerCase();
 
-                const nameOrNetworkerMatch = networker.includes(nameInput) || name.includes(nameInput);
-                const statusMatch = statusFilter === "" || status === statusFilter;
+                // Extract all relevant data for filtering
+                const networker_name = cells[0].innerText.trim().toLowerCase();
+                const studentName = cells[2].innerText.trim().toLowerCase();
+                const regNumber = cells[1].innerText.trim().toLowerCase();
+                const bb1Status = cells[3].innerText.trim().toLowerCase();
+                const review1Status = cells[4].innerText.trim().toLowerCase();
+                const bb2Status = cells[5].innerText.trim().toLowerCase();
+                const bb3Status = cells[6].innerText.trim().toLowerCase();
+                const review2_3Status = cells[7].innerText.trim().toLowerCase();
+                const bb4Status = cells[8].innerText.trim().toLowerCase();
+                const bb5Status = cells[9].innerText.trim().toLowerCase();
+                const review4_5Status = cells[10].innerText.trim().toLowerCase();
+                const bb6Status = cells[11].innerText.trim().toLowerCase();
 
-                rows[i].style.display = nameOrNetworkerMatch && statusMatch ? '' : 'none';
+                // Match name and status filter across all columns
+                const nameMatch = networker_name.includes(nameInput) || studentName.includes(nameInput) || regNumber.includes(nameInput);
+                const statusMatch = (statusFilter === "" ||
+                    bb1Status.includes(statusFilter) ||
+                    review1Status.includes(statusFilter) ||
+                    bb2Status.includes(statusFilter) ||
+                    bb3Status.includes(statusFilter) ||
+                    review2_3Status.includes(statusFilter) ||
+                    bb4Status.includes(statusFilter) ||
+                    bb5Status.includes(statusFilter) ||
+                    review4_5Status.includes(statusFilter) ||
+                    bb6Status.includes(statusFilter)
+                );
+
+                // Apply filter: show row if both conditions are true
+                rows[i].style.display = nameMatch && statusMatch ? '' : 'none';
             }
         }
 
-
-
+        // Download CSV function
         // Download CSV function
         document.getElementById('download-icon').addEventListener('click', function () {
             const table = document.getElementById('attendance-details-table');
             const rows = table.getElementsByTagName('tr');
-            let csvContent = '';
+            let csvContent = 'Networker Name, Reg Number, Student Name,BB1,Review 1,BB2,BB3,Review 2-3,BB4,BB5,Review 4-5,BB6\n';
 
-            for (let i = 0; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName(i === 0 ? 'th' : 'td');
+            // Loop through each row and create CSV content
+            for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
+                const cells = rows[i].getElementsByTagName('td');
                 const row = Array.from(cells).map(cell => cell.innerText.replace(/,/g, '')).join(',');
                 csvContent += row + '\n';
             }
 
+            // Create a blob for the CSV and trigger download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -170,7 +287,17 @@
             link.click();
         });
 
+
+        // Initialize and populate the table when the page is loaded
+        window.onload = function () {
+            populateTable();
+            filterTable(); // If you want to filter results immediately on load based on defaults
+        };
     </script>
+
+
+
+
 </body>
 
 </html>

@@ -163,72 +163,101 @@ def attendance_summary():
         return jsonify({'error': str(e)}), 500
 
 
-# API to get network attendance summary
 @app.route('/api/network_attendance', methods=['GET'])
 def network_attendance():
     try:
-        # Step 1: Fetch attendance data
-        response = supabase.table('attendance').select('student_id, status').execute()
-        print("Attendance Data:", response.data)
+        # SQL query to pass to the stored procedure
+        sql_query = """
+        WITH AttendanceWithNetworker AS (
+            SELECT
+                a.networker,
+                b.status,
+                CASE 
+                    WHEN b.status = '' OR b.status IS NULL THEN 'Unknown'
+                    ELSE b.status
+                END AS valid_status
+            FROM
+                students a
+            LEFT JOIN
+                attendance b
+            ON
+                a.id = b.student_id
+        ),
+        AggregatedAttendance AS (
+            SELECT
+                networker,
+                valid_status AS status,
+                COUNT(*) AS status_count,
+                SUM(COUNT(*)) OVER (PARTITION BY networker) AS total
+            FROM
+                AttendanceWithNetworker
+            GROUP BY
+                networker, valid_status
+        ),
+        AttendancePercentages AS (
+            SELECT
+                networker,
+                MAX(CASE WHEN status = 'present' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS present_percent,
+                MAX(CASE WHEN status = 'Absent/Not Interested' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS absent_percent,
+                MAX(CASE WHEN status = 'Will take Recording' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS late_percent,
+                MAX(CASE WHEN status = 'Unknown' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS unknown_percent
+            FROM
+                AggregatedAttendance
+            GROUP BY
+                networker
+        )
+        
+        SELECT
+            networker,
+            present_percent,
+            absent_percent,
+            late_percent,
+            unknown_percent
+        FROM
+            AttendancePercentages;
+        """
+
+        # Call the stored procedure using Supabase RPC
+        response = supabase.rpc('new_execute_sql', {'query': sql_query}).execute()
 
         if response.data:
-            network_data = {}
-
-            for item in response.data:
-                student_id = item['student_id']
-                status = item['status']
-
-                # Step 2: Fetch student networker
-                student_response = supabase.table('students').select('networker').eq('id', student_id).execute()
-                print(f"Student ID: {student_id}, Response: {student_response.data}")
-
-                networker = student_response.data[0]['networker'] if student_response.data else None
-
-                if networker:
-                    if networker not in network_data:
-                        network_data[networker] = {'present': 0, 'Absent/Not Interested': 0, 'Will take Recording': 0, 'total': 0}
-
-                    network_data[networker]['total'] += 1
-                    network_data[networker][status] += 1
-
-            # Step 3: Calculate percentages
-            network_summary = []
-            for networker, stats in network_data.items():
-                present_percent = (stats['present'] / stats['total']) * 100 if stats['total'] > 0 else 0
-                absent_percent = (stats['Absent/Not Interested'] / stats['total']) * 100 if stats['total'] > 0 else 0
-                late_percent = (stats['Will take Recording'] / stats['total']) * 100 if stats['total'] > 0 else 0
-
-                network_summary.append({
-                    'networker': networker,
-                    'present_percent': present_percent,
-                    'absent_percent': absent_percent,
-                    'late_percent': late_percent
-                })
-
-            print("Network Summary:", network_summary)
+            # Process and return the response
+            network_summary = [
+                {
+                    'networker': row['networker'],
+                    'present_percent': row['present_percent'],
+                    'absent_percent': row['absent_percent'],
+                    'late_percent': row['late_percent'],
+                    'unknown_percent': row['unknown_percent']
+                }
+                for row in response.data
+            ]
             return jsonify(network_summary)
-
         else:
-            print("No attendance data available.")
             return jsonify([]), 404
 
     except Exception as e:
         print("Error:", str(e))
         return jsonify({'error': str(e)}), 500
 
-
-# New route to display the detailed attendance records
 @app.route('/attendance_details')
 def attendance_details():
     try:
         # Define the SQL query for attendance summary per student and lesson
         query = """
         SELECT 
-            s.networker AS networker_role,
+            s.networker AS networker_name,
+            s.reg_number AS reg_number, 
             s.name AS student_name,
-            l.title AS lesson_title,
-            a.status AS attendance_status,
-            CAST(COUNT(a.id) AS integer) AS count_status
+            MAX(CASE WHEN a.lesson_id = '2fa47ba0-74a3-4308-8b13-c5c5dd6e6e72' THEN a.status END) AS "BB1",
+            MAX(CASE WHEN a.lesson_id = 'e765cfae-0c2b-4619-8a0d-0e81e034afdd' THEN a.status END) AS "Review 1",
+            MAX(CASE WHEN a.lesson_id = '5c41211b-dbdd-428b-97f6-3fb08a914e5e' THEN a.status END) AS "BB2",
+            MAX(CASE WHEN a.lesson_id = '8c97ccf2-8625-4a13-9292-0ca42dab7d51' THEN a.status END) AS "BB3",
+            MAX(CASE WHEN a.lesson_id = '2cb665fd-05e6-4e37-9a94-93b51c21aa52' THEN a.status END) AS "Review 2-3",
+            MAX(CASE WHEN a.lesson_id = '3a9305d6-aa60-4a6e-b774-672792c62967' THEN a.status END) AS "BB4",
+            MAX(CASE WHEN a.lesson_id = '45801f05-fd36-432e-bdb0-0373147b5e76' THEN a.status END) AS "BB5",
+            MAX(CASE WHEN a.lesson_id = 'cc606305-0767-4efe-b1bc-02beee4666ee' THEN a.status END) AS "Review 4-5",
+            MAX(CASE WHEN a.lesson_id = '2cae1fcf-107b-4ed9-90bd-76e5f73cf875' THEN a.status END) AS "BB6"
         FROM 
             public.students s
         LEFT JOIN 
@@ -236,14 +265,14 @@ def attendance_details():
         LEFT JOIN 
             public.lessons l ON a.lesson_id = l.id
         GROUP BY 
-            s.networker, s.name, l.title, a.status
+            s.name, s.networker, s.reg_number
         ORDER BY 
-            attendance_status;
+            s.name;
         """
         
-        # Execute the query using Supabase
+        # Execute the query using the corrected stored procedure
         response = supabase.rpc('execute_raw_sql', {'query': query}).execute()
-
+        
         if response.data:
             return render_template('attendance_details.html', records=response.data)
         else:
@@ -251,7 +280,6 @@ def attendance_details():
 
     except Exception as e:
         return f"Error: {str(e)}", 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
