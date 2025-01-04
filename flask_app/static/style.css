@@ -22,12 +22,7 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.navbar h1 {
-    margin: 0;
-    font-size: 24px;
-    text-align: center;
-    flex-grow: 1;
-}
+
 
 .navbar ul {
     list-style: none;
