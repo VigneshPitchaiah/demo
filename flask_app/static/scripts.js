@@ -65,9 +65,9 @@ function fetchStudentsForNetworker(networker, lessonId) {
                     <td>${student.reg_number}</td>
                     <td>${student.name}</td>
                     <td>
-                        <select data-student-id="${student.id}">
-                            <option value="" selected disabled>Select Status</option> <!-- Default empty value -->
-                            <option value="present">present</option>
+                        <select data-student-id="${student.id}" class="status-select">
+                            <option value="" selected disabled>Select Status</option>
+                            <option value="present">Present</option>
                             <option value="Absent/Not Interested">Absent/Not Interested</option>
                             <option value="Will take Recording">Will take Recording</option>
                         </select>
@@ -78,9 +78,28 @@ function fetchStudentsForNetworker(networker, lessonId) {
                 `;
                 tableBody.appendChild(row);
             });
+
+            // Add event listeners to allow corrections
+            const selectElements = tableBody.querySelectorAll('.status-select');
+            selectElements.forEach(select => {
+                select.addEventListener('change', function () {
+                    // Allow the user to change the selection
+                    console.log(`Student ID: ${this.dataset.studentId}, New Value: ${this.value}`);
+                });
+
+                select.addEventListener('mousedown', function (event) {
+                    if (this.value) {
+                        // Reset value on click for easier corrections
+                        event.preventDefault(); // Prevent dropdown from opening immediately
+                        this.value = ''; // Reset selection
+                    }
+                });
+            });
         })
         .catch(err => console.error('Error fetching students:', err));
 }
+
+
 
 
 function submitAttendance() {
