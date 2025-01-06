@@ -187,6 +187,8 @@
     </div>
 
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <script>
         // Sample function to simulate getting data from the server
         async function fetchAttendanceData() {
@@ -266,26 +268,7 @@
         }
 
         // Download CSV function
-        // Download CSV function
-        document.getElementById('download-icon').addEventListener('click', function () {
-            const table = document.getElementById('attendance-details-table');
-            const rows = table.getElementsByTagName('tr');
-            let csvContent = 'Networker Name, Reg Number, Student Name,BB1,Review 1,BB2,BB3,Review 2-3,BB4,BB5,Review 4-5,BB6\n';
 
-            // Loop through each row and create CSV content
-            for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
-                const cells = rows[i].getElementsByTagName('td');
-                const row = Array.from(cells).map(cell => cell.innerText.replace(/,/g, '')).join(',');
-                csvContent += row + '\n';
-            }
-
-            // Create a blob for the CSV and trigger download
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'attendance_summary.csv';
-            link.click();
-        });
 
 
         // Initialize and populate the table when the page is loaded
@@ -294,7 +277,17 @@
             filterTable(); // If you want to filter results immediately on load based on defaults
         };
     </script>
+    <script>
+        document.getElementById("download-icon").addEventListener("click", function () {
+            const table = document.getElementById("attendance-details-table");
 
+            // Convert the table to an Excel workbook
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+
+            // Export the workbook to an Excel file
+            XLSX.writeFile(wb, "students_record.xlsx");
+        });
+    </script>
 
 
 
