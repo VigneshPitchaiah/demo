@@ -168,53 +168,64 @@ def network_attendance():
     try:
         # SQL query to pass to the stored procedure
         sql_query = """
-        WITH AttendanceWithNetworker AS (
-            SELECT
-                a.networker,
-                b.status,
-                CASE 
-                    WHEN b.status = '' OR b.status IS NULL THEN 'Unknown'
-                    ELSE b.status
-                END AS valid_status
-            FROM
-                students a
-            LEFT JOIN
-                attendance b
-            ON
-                a.id = b.student_id
-        ),
-        AggregatedAttendance AS (
-            SELECT
-                networker,
-                valid_status AS status,
-                COUNT(*) AS status_count,
-                SUM(COUNT(*)) OVER (PARTITION BY networker) AS total
-            FROM
-                AttendanceWithNetworker
-            GROUP BY
-                networker, valid_status
-        ),
-        AttendancePercentages AS (
-            SELECT
-                networker,
-                MAX(CASE WHEN status = 'present' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS present_percent,
-                MAX(CASE WHEN status = 'Absent/Not Interested' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS absent_percent,
-                MAX(CASE WHEN status = 'Will take Recording' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS late_percent,
-                MAX(CASE WHEN status = 'Unknown' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS unknown_percent
-            FROM
-                AggregatedAttendance
-            GROUP BY
-                networker
-        )
-        
-        SELECT
-            networker,
-            present_percent,
-            absent_percent,
-            late_percent,
-            unknown_percent
-        FROM
-            AttendancePercentages;
+        WITH LatestAttendance AS (
+    SELECT
+        a.networker,
+        b.status,
+        b.timestamp,
+        ROW_NUMBER() OVER (PARTITION BY a.id ORDER BY b.timestamp DESC) AS rn
+    FROM
+        students a
+    LEFT JOIN
+        attendance b
+    ON
+        a.id = b.student_id
+),
+AttendanceWithNetworker AS (
+    SELECT
+        networker,
+        status,
+        CASE 
+            WHEN status = '' OR status IS NULL THEN 'Unknown'
+            ELSE status
+        END AS valid_status
+    FROM
+        LatestAttendance
+    WHERE
+        rn = 1
+),
+AggregatedAttendance AS (
+    SELECT
+        networker,
+        valid_status AS status,
+        COUNT(*) AS status_count,
+        SUM(COUNT(*)) OVER (PARTITION BY networker) AS total
+    FROM
+        AttendanceWithNetworker
+    GROUP BY
+        networker, valid_status
+),
+AttendancePercentages AS (
+    SELECT
+        networker,
+        MAX(CASE WHEN status = 'present' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS present_percent,
+        MAX(CASE WHEN status = 'Absent/Not Interested' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS absent_percent,
+        MAX(CASE WHEN status = 'Will take Recording' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS late_percent,
+        MAX(CASE WHEN status = 'Unknown' THEN (status_count * 100.0 / total)::double precision ELSE 0::double precision END) AS unknown_percent
+    FROM
+        AggregatedAttendance
+    GROUP BY
+        networker
+)
+
+SELECT
+    networker,
+    present_percent,
+    absent_percent,
+    late_percent,
+    unknown_percent
+FROM
+    AttendancePercentages;
         """
 
         # Call the stored procedure using Supabase RPC
@@ -245,29 +256,40 @@ def attendance_details():
     try:
         # Define the SQL query for attendance summary per student and lesson
         query = """
-        SELECT 
-            s.networker AS networker_name,
-            s.reg_number AS reg_number, 
-            s.name AS student_name,
-            MAX(CASE WHEN a.lesson_id = '2fa47ba0-74a3-4308-8b13-c5c5dd6e6e72' THEN a.status END) AS "BB1",
-            MAX(CASE WHEN a.lesson_id = 'e765cfae-0c2b-4619-8a0d-0e81e034afdd' THEN a.status END) AS "Review 1",
-            MAX(CASE WHEN a.lesson_id = '5c41211b-dbdd-428b-97f6-3fb08a914e5e' THEN a.status END) AS "BB2",
-            MAX(CASE WHEN a.lesson_id = '8c97ccf2-8625-4a13-9292-0ca42dab7d51' THEN a.status END) AS "BB3",
-            MAX(CASE WHEN a.lesson_id = '2cb665fd-05e6-4e37-9a94-93b51c21aa52' THEN a.status END) AS "Review 2-3",
-            MAX(CASE WHEN a.lesson_id = '3a9305d6-aa60-4a6e-b774-672792c62967' THEN a.status END) AS "BB4",
-            MAX(CASE WHEN a.lesson_id = '45801f05-fd36-432e-bdb0-0373147b5e76' THEN a.status END) AS "BB5",
-            MAX(CASE WHEN a.lesson_id = 'cc606305-0767-4efe-b1bc-02beee4666ee' THEN a.status END) AS "Review 4-5",
-            MAX(CASE WHEN a.lesson_id = '2cae1fcf-107b-4ed9-90bd-76e5f73cf875' THEN a.status END) AS "BB6"
-        FROM 
-            public.students s
-        LEFT JOIN 
-            public.attendance a ON s.id = a.student_id
-        LEFT JOIN 
-            public.lessons l ON a.lesson_id = l.id
-        GROUP BY 
-            s.name, s.networker, s.reg_number
-        ORDER BY 
-            s.name;
+        WITH LatestAttendance AS (
+    SELECT
+        a.student_id,
+        a.lesson_id,
+        a.status,
+        a.timestamp,
+        ROW_NUMBER() OVER (PARTITION BY a.student_id, a.lesson_id ORDER BY a.timestamp DESC) AS rn
+    FROM
+        public.attendance a
+)
+SELECT 
+    s.networker AS networker_name,
+    s.reg_number AS reg_number, 
+    s.name AS student_name,
+    MAX(CASE WHEN la.lesson_id = '2fa47ba0-74a3-4308-8b13-c5c5dd6e6e72' THEN la.status END) AS "BB1",
+    MAX(CASE WHEN la.lesson_id = 'e765cfae-0c2b-4619-8a0d-0e81e034afdd' THEN la.status END) AS "Review 1",
+    MAX(CASE WHEN la.lesson_id = '5c41211b-dbdd-428b-97f6-3fb08a914e5e' THEN la.status END) AS "BB2",
+    MAX(CASE WHEN la.lesson_id = '8c97ccf2-8625-4a13-9292-0ca42dab7d51' THEN la.status END) AS "BB3",
+    MAX(CASE WHEN la.lesson_id = '2cb665fd-05e6-4e37-9a94-93b51c21aa52' THEN la.status END) AS "Review 2-3",
+    MAX(CASE WHEN la.lesson_id = '3a9305d6-aa60-4a6e-b774-672792c62967' THEN la.status END) AS "BB4",
+    MAX(CASE WHEN la.lesson_id = '45801f05-fd36-432e-bdb0-0373147b5e76' THEN la.status END) AS "BB5",
+    MAX(CASE WHEN la.lesson_id = 'cc606305-0767-4efe-b1bc-02beee4666ee' THEN la.status END) AS "Review 4-5",
+    MAX(CASE WHEN la.lesson_id = '2cae1fcf-107b-4ed9-90bd-76e5f73cf875' THEN la.status END) AS "BB6"
+FROM 
+    public.students s
+LEFT JOIN 
+    LatestAttendance la ON s.id = la.student_id AND la.rn = 1
+LEFT JOIN 
+    public.lessons l ON la.lesson_id = l.id
+GROUP BY 
+    s.name, s.networker, s.reg_number
+ORDER BY 
+    s.name;
+
         """
         
         # Execute the query using the corrected stored procedure
